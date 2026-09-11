@@ -416,9 +416,9 @@
       </div>
 
       <section class="visited-box" aria-label="기타 방문 장소 입력">
-        <span class="visited-mode" id="visited-mode">시연 모드 · 다국어 예시 인식</span>
+        <span class="visited-mode" id="visited-mode">AI 장소 인식 · 다국어 입력 가능</span>
         <label for="visited-other">기타: 가보신 곳을 입력해주세요</label>
-        <p id="visited-mode-note">편한 언어로 입력하세요. 현재는 등록된 다국어 예시를 인식하며, 실제 AI 연결 전입니다.</p>
+        <p id="visited-mode-note">영어·일본어·중국어·태국어 등 편한 언어로 입력하면 Visit Seoul 공식 장소와 대조합니다.</p>
         <textarea id="visited-other" maxlength="600" placeholder="예: Seoul Forest, 広蔵市場&#10;여러 장소는 쉼표나 줄바꿈으로 구분해주세요." aria-describedby="visited-mode-note visited-status"></textarea>
         <div class="visited-examples" aria-label="다국어 입력 예시">
           <button type="button" data-place-example="Seoul Forest">🇺🇸 Seoul Forest</button>
@@ -1647,7 +1647,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   (() => {
     const {catalog,resolveDemo,validateResults}=VisitedCore;
     const visits=new Map();
-    let mode='demo', requestVersion=0;
+    let mode='llm', requestVersion=0;
     const input=document.getElementById('visited-other');
     const status=document.getElementById('visited-status');
     const results=document.getElementById('visited-results');
@@ -1693,9 +1693,16 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
         try{
           let matches;
           if(mode==='llm'){
-            const response=await fetch('/api/places/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:AbortSignal.timeout(25000)});
-            if(!response.ok)throw new Error('request');
-            const data=await response.json();matches=validateResults(data.results);
+            try {
+              const apiBase=(window.SEOULMATE_API_BASE||'').replace(/\/$/,'');
+              const response=await fetch(apiBase+'/api/places/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:AbortSignal.timeout(25000)});
+              if(!response.ok)throw new Error('request');
+              const data=await response.json();matches=validateResults(data.results);
+            } catch {
+              // API가 잠시 깨어나는 중이어도 기본 다국어 별칭으로 입력을 잃지 않습니다.
+              matches=resolveDemo(text);
+              status.textContent='서버 연결이 지연되어 기기 내 다국어 목록으로 먼저 확인했어요.';
+            }
           }else matches=resolveDemo(text);
           if(version!==requestVersion)return;
           matches.forEach(r=>{

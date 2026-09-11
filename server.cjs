@@ -9,12 +9,25 @@ const {createVisitService}=require('./visit-api.cjs');
 const visit=createVisitService();
 const {createLocalDataService}=require('./local-data.cjs');
 const local=createLocalDataService({visitService:visit});
+const {resolve:resolvePlaces}=require('./place-resolver.cjs');
 function createServer(){return http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   const allowedOrigins=new Set(['https://anamsensei.github.io',...(process.env.ALLOWED_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean)]);
   if(origin&&allowedOrigins.has(origin)){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
   const reply=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
+  if(req.method==='OPTIONS'){
+    res.writeHead(204,{'Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Max-Age':'600'});return res.end();
+  }
   let url;try{url=new URL(req.url,'http://localhost');}catch{return reply(400,{error:'INVALID_REQUEST'});}
+  if(req.method==='POST'&&url.pathname==='/api/places/resolve'){
+    let body='';
+    for await (const chunk of req) { body+=chunk; if(body.length>20000) return reply(413,{error:'BODY_TOO_LARGE'}); }
+    try {
+      const parsed=JSON.parse(body||'{}'); const text=String(parsed.text||'').trim();
+      if(!text||text.length>600)return reply(400,{error:'TEXT_REQUIRED'});
+      return reply(200,{mode:'multilingual-semantic',source:'visitseoul-catalog',results:resolvePlaces(text)});
+    } catch { return reply(400,{error:'INVALID_JSON'}); }
+  }
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});
   if(url.pathname==='/health')return reply(200,{ok:true,build:'itinerary-20260912-2',commit:process.env.RENDER_GIT_COMMIT||null});
   if(url.pathname==='/api/city'){
