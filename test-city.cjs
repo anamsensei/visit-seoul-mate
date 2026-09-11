@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {normalizeCity,createCityService}=require('./city-api.cjs');
+const sample=JSON.parse(fs.readFileSync(__dirname+'/city-sample.json','utf8'));
+(async()=>{
+  const d=normalizeCity(sample);assert.equal(d.area,'광화문·덕수궁');
+  assert.equal(d.weather.pm25.grade,'점검중');assert.equal(d.weather.pm25.value,null);
+  assert.ok(d.weather.forecast.length);
+  const dirty=structuredClone(sample);dirty.CITYDATA.EVENT_STTS=[{EVENT_NM:'<script>bad()</script>',URL:'javascript:alert(1)'}];
+  assert.equal('events' in normalizeCity(dirty),false);
+  const empty=normalizeCity({CITYDATA:{AREA_NM:'광화문·덕수궁'}});assert.equal(empty.weather.temperature,null);
+  assert.throws(()=>normalizeCity({RESULT:{CODE:'ERROR-300'}}),/SEOUL_API_ERROR/);
+  assert.equal((await createCityService({key:''})('연남동')).mode,'unconfigured');
+  let calls=0;const svc=createCityService({key:'fake',fetcher:async()=>{calls++;return {ok:true,json:async()=>sample};}});
+  const values=await Promise.all([svc('광화문·덕수궁'),svc('광화문·덕수궁')]);assert.deepEqual(values[0],values[1]);assert.equal(calls,1);
+  await svc('광화문·덕수궁');assert.equal(calls,1);
+  await assert.rejects(()=>svc('연남동'),/AREA_MISMATCH/);
+  await assert.rejects(()=>svc('__proto__'),/INVALID_AREA/);
+  console.log('PASS: weather/environment forecast, maintenance/missing fields, unused data exclusion, API errors, region validation, cache and concurrency. No private key used.');
+})();

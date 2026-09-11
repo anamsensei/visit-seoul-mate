@@ -1,0 +1,98 @@
+{
+  "mode": "snapshot",
+  "area": "광화문·덕수궁",
+  "areaCode": "POI009",
+  "fetchedAt": "2026-09-11T07:14:08.355Z",
+  "source": "서울 열린데이터광장 · 실시간 도시데이터",
+  "crowd": {
+    "level": "약간 붐빔",
+    "message": "사람들이 몰려있을 가능성이 크고 붐빈다고 느낄 수 있어요. 인구밀도가 높은 구간에서는 도보 이동시 부딪힘이 발생할 수 있어요.",
+    "time": "2026-09-11 15:40",
+    "replaced": false,
+    "forecast": [
+      {
+        "time": "2026-09-11 17:00",
+        "level": "약간 붐빔"
+      },
+      {
+        "time": "2026-09-11 18:00",
+        "level": "약간 붐빔"
+      },
+      {
+        "time": "2026-09-11 19:00",
+        "level": "보통"
+      },
+      {
+        "time": "2026-09-11 20:00",
+        "level": "보통"
+      },
+      {
+        "time": "2026-09-11 21:00",
+        "level": "여유"
+      },
+      {
+        "time": "2026-09-11 22:00",
+        "level": "여유"
+      }
+    ]
+  },
+  "weather": {
+    "temperature": 25.6,
+    "humidity": 42,
+    "wind": 3.2,
+    "precipitation": "없음",
+    "rain": "-",
+    "message": "비 또는 눈 소식이 없어요.",
+    "time": "2026-09-11 16:00",
+    "sunset": "18:47",
+    "uv": "보통",
+    "uvMessage": "2-3시간 햇볕에 노출 시 피부 화상을 입을 수 있어요.외출시 모자나 선글라스를 착용해주세요.자외선 차단제를 발라주세요.",
+    "pm25": {
+      "grade": "점검중",
+      "value": null
+    },
+    "pm10": {
+      "grade": "점검중",
+      "value": null
+    },
+    "airMessage": "원본 시스템 서비스 점검중입니다.",
+    "forecast": [
+      {
+        "time": "202609111700",
+        "temperature": "24",
+        "sky": "흐림",
+        "rainChance": 20
+      },
+      {
+        "time": "202609111800",
+        "temperature": "23",
+        "sky": "구름많음",
+        "rainChance": 20
+      },
+      {
+        "time": "202609111900",
+        "temperature": "23",
+        "sky": "구름많음",
+        "rainChance": 20
+      },
+      {
+        "time": "202609112000",
+        "temperature": "22",
+        "sky": "구름많음",
+        "rainChance": 0
+      },
+      {
+        "time": "202609112100",
+        "temperature": "21",
+        "sky": "구름많음",
+        "rainChance": 20
+      },
+      {
+        "time": "202609112200",
+        "temperature": "20",
+        "sky": "구름많음",
+        "rainChance": 20
+      }
+    ]
+  }
+}

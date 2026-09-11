@@ -328,6 +328,8 @@
     .visited-selected-heading span{color:#1A56DB}
   .weather-card{background:linear-gradient(145deg,#F1F7FF 0%,#FFF 76%);border:1px solid #CEDFFC;border-radius:19px;padding:17px;margin:0 0 17px;box-shadow:0 5px 18px #1A56DB08;color:#0D2137}.weather-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.weather-heading{font-size:13px;font-weight:800}.weather-badge{font-size:10px;font-weight:700;color:#047857;background:#E2F6EF;border-radius:20px;padding:5px 8px;white-space:nowrap}.weather-badge.sample{background:#FFF3D6;color:#916516}.weather-place{font-size:11px;color:#64748B;margin:8px 0 12px}.weather-main{display:flex;align-items:center;gap:14px}.weather-art{height:72px;width:72px;border-radius:22px;background:linear-gradient(135deg,#CCE1FF,#EAF4FF);display:grid;place-items:center;font-size:52px;color:#2261C8;flex-shrink:0;line-height:1}.weather-temperature{font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1.15}.weather-temperature small{font-size:19px;font-weight:500;letter-spacing:0;vertical-align:top;display:inline-block;margin-top:6px}.weather-condition{font-size:12px;color:#536580;margin-top:3px}.weather-refresh{margin-left:auto;align-self:flex-start;border:1px solid #D4E2F5;border-radius:10px;background:#FFF;color:#1A56DB;width:38px;height:38px;cursor:pointer;font-size:23px}.weather-refresh:disabled{opacity:.5}.weather-metrics{display:grid;grid-template-columns:repeat(3,1fr);padding:13px 0;margin-top:14px;border-top:1px solid #DFE9F6;border-bottom:1px solid #DFE9F6;text-align:center}.weather-metrics>div+div{border-left:1px solid #DFE9F6}.weather-metrics dt{font-size:10px;color:#64748B}.weather-metrics dd{font-size:13px;font-weight:800;margin-top:6px}.weather-advice{display:flex;align-items:flex-start;gap:8px;background:#E9F2FF;padding:10px 11px;border-radius:10px;margin-top:12px;font-size:11px;line-height:1.7;color:#27518A}.weather-meta{font-size:10px;color:#64748B;line-height:1.7;margin-top:10px;overflow-wrap:anywhere}.weather-status{font-size:10px;color:#64748B;line-height:1.6;margin-top:5px}.weather-demo{margin-top:10px;font-size:10px;color:#64748B}.weather-demo summary{cursor:pointer;padding:5px 0}.weather-demo select{margin-top:7px;padding:8px;font-size:11px}.weather-card.rainy .weather-art{background:linear-gradient(135deg,#DBE6F2,#EEF3FA);color:#5B749D}.weather-card button:focus-visible{outline:3px solid #90B5FA;outline-offset:2px}
 
+.city-card{border:1px solid #D4E2FB;background:white;border-radius:18px;padding:16px;margin:0 0 16px}.city-card h2{font-size:15px;color:#0D2137}.city-top{display:flex;justify-content:space-between;align-items:center;gap:7px}.city-badge{font-size:10px;background:#EBF2FE;color:#1A56DB;padding:5px 8px;border-radius:20px}.city-controls{display:flex;gap:7px;margin:12px 0 8px}.city-controls select{min-width:0;padding:10px;font-size:12px}.city-controls button,.city-sample{border:1px solid #D4E2FB;background:#F4F8FF;color:#1A56DB;border-radius:9px;padding:9px;font-size:11px;cursor:pointer}.city-card p{font-size:11px;line-height:1.7;color:#64748B;white-space:pre-line;overflow-wrap:anywhere}.city-card details{border-top:1px solid #E6EDF7;padding:12px 0 2px;margin-top:10px}.city-card summary{font-size:12px;font-weight:700;cursor:pointer;color:#1A56DB}.city-row{padding:9px 0;border-bottom:1px solid #EFF3F9}.city-row strong{font-size:12px;display:block}.city-row a{font-size:11px;color:#1A56DB;display:inline-block;padding:8px 0}.city-crowd{font-size:23px;color:#1A56DB;font-weight:800;margin:12px 0 5px}.city-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.city-grid>div{font-size:11px;background:#F0F6FF;border-radius:9px;padding:12px 8px;color:#224D86}.city-sample{margin-top:8px}.city-hint{font-size:10px!important;margin-top:8px}
+
 </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
@@ -627,13 +629,31 @@
 
       <section class="weather-card" id="weather-card" aria-label="여행 지역의 현재 날씨">
         <div class="weather-top"><h2 class="weather-heading">지금, 우리 동네 날씨</h2><span class="weather-badge sample" id="weather-badge">예시 날씨</span></div>
-        <p class="weather-place">⌖ <span id="weather-region">홍대 · 연남</span> · 선택한 여행 지역 기준</p>
+        <p class="weather-place">⌖ <span id="weather-region">홍대 · 연남</span> · 표시된 조회 지역 기준</p>
         <div class="weather-main"><div class="weather-art" aria-hidden="true" id="weather-icon">◌</div><div><div class="weather-temperature"><span id="weather-temperature">—</span><small>°C</small></div><p class="weather-condition" id="weather-condition">날씨 확인 중</p></div><button type="button" class="weather-refresh" id="weather-refresh" aria-label="날씨 새로고침" title="날씨 새로고침">↻</button></div>
-        <dl class="weather-metrics"><div><dt>습도</dt><dd id="weather-humidity">—</dd></div><div><dt>바람</dt><dd id="weather-wind">—</dd></div><div><dt>1시간 강수량</dt><dd id="weather-rain">—</dd></div></dl>
+        <dl class="weather-metrics"><div><dt>습도</dt><dd id="weather-humidity">—</dd></div><div><dt>바람</dt><dd id="weather-wind">—</dd></div><div><dt>강수량</dt><dd id="weather-rain">—</dd></div></dl>
         <div class="weather-advice"><span aria-hidden="true">✦</span><p id="weather-advice">다음 장소로 출발하기 전, 날씨를 확인해요.</p></div>
         <div class="weather-meta"><div id="weather-time"></div><div id="weather-source">연결 예정: 기상청 초단기실황</div></div>
         <p class="weather-status" id="weather-status" role="status" aria-live="polite"></p>
         <details class="weather-demo" id="weather-demo"><summary>시연 날씨 바꿔보기</summary><label for="weather-scenario" style="font-size:11px">기획안 화면용 예시</label><select id="weather-scenario"><option value="dry">강수 없음 · 24.3°C</option><option value="rain">비 · 20.8°C</option><option value="snow">눈 · −1.2°C</option></select></details>
+      </section>
+
+
+      <section class="city-card" aria-label="서울시 날씨 환경 및 혼잡도 정보">
+        <div class="city-top"><h2>지금 이 지역은?</h2><span class="city-badge" id="city-badge">연결 대기</span></div>
+        <p class="city-hint">서울시 지정 지역 단위 정보 · 가게별 혼잡도가 아닙니다.</p>
+        <div class="city-controls"><select id="city-area" aria-label="서울시 정보 조회 지역"><option>연남동</option><option>홍대 관광특구</option><option>광화문·덕수궁</option><option>서울숲공원</option><option>혜화역</option><option>압구정로데오거리</option><option>합정역</option></select><button id="city-refresh" type="button">새로고침</button></div>
+        <p id="city-status" role="status" aria-live="polite">서울시 API 연결 대기 중</p>
+        <button class="city-sample" id="city-sample" type="button">공개 샘플로 보기 · 광화문·덕수궁</button>
+        <div id="city-content" hidden>
+          <p id="city-area-name" style="margin-top:14px;font-weight:700"></p><div class="city-crowd" id="city-crowd"></div><p id="city-message"></p><p class="city-hint" id="city-time"></p>
+          <details><summary>시간대별 혼잡도 전망</summary><div id="city-forecast"></div></details>
+          <div class="city-grid"><div id="city-air"></div><div id="city-pm10"></div><div id="city-uv"></div><div id="city-sunset"></div></div><p id="city-air-note"></p>
+          <details><summary>시간대별 날씨 · 강수확률</summary><div id="city-weather-forecast"></div></details>
+          
+          
+          <p class="city-hint">출처: 서울 열린데이터광장 · 실시간 도시데이터</p>
+        </div>
       </section>
 
       <div class="timeline-wrap" id="planner-timeline"></div>
@@ -686,16 +706,16 @@
     <div class="modal-card">
       <div class="modal-body">
         <div style="display:inline-block; background:#FEE2E2; color:#DC2626; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; margin-bottom:10px;">
-          ⚠️ 다음 목적지 실시간 혼잡도 경보
+          ⚠️ 다음 목적지 참고 지역 혼잡 안내
         </div>
         <div class="modal-title" id="crowd-spot-name">연남동 동진시장</div>
         <div class="modal-sub">
-          현재 다음 목적지는 <strong>추정 인구밀도가 70% 이상</strong>으로 매우 붐비고 있는 상태에요!<br>
+          다음 목적지의 <strong>참고 지역이 붐비고 있어요.</strong> 개별 매장 상황은 다를 수 있어요.<br>
           그럼에도 계속 안내받으시겠어요?
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button class="btn btn-primary" onclick="replaceWithAlternative()" style="background:#10B981; border:none;">
-            ✨ 새로운 놀거리 추천받기 (쾌적 대안 교체)
+            ✨ 다른 일정으로 바꾸기 (예시 · 혼잡도 미확인)
           </button>
           <button class="btn btn-secondary" onclick="dismissCrowdModal()">
             계속 이용하기 (기존 일정 유지)
@@ -755,6 +775,8 @@
 </div>
 
 <script>
+window.SEOULMATE_API_BASE = ""; // 배포한 서버 주소, 예: https://seoulmate-api.onrender.com
+
   window.currentStep = 1;
   window.totalSteps = 6;
   window.selectedRegionKey = 'hongdae';
@@ -813,7 +835,7 @@
     hongdae: {
       id: "ALT_HD",
       title: "연남동 끝자락 한옥 블렌딩 티하우스",
-      desc: "[비짓서울 대체 추천] 혼잡도 20%의 조용하고 고즈넉한 정원형 다도 쉼터",
+      desc: "[비짓서울 대체 추천] 혼잡도 미확인 · 고즈넉한 정원형 다도 쉼터",
       tag: "#비짓서울_힐링",
       transit: "도보 6분",
       congestion: 20,
@@ -891,6 +913,7 @@
   }
 
   function buildTimelineUI(startHour, duration) {
+    queueMicrotask(() => window.cityAfterPlans?.());
     const container = document.getElementById('planner-timeline');
     if (!container) return;
 
@@ -925,7 +948,7 @@
             <div class="plan-title">${plan.title}</div>
             <div class="plan-desc">${plan.desc}</div>
             <div class="plan-tags">
-              <span class="tag-cong ${congClass}">${congLabel} (${plan.congestion}%)</span>
+              <span class="tag-cong ${congClass}">지역 혼잡도 확인 필요</span>
               <span class="tag-badge">${plan.tag}</span>
               <span style="font-size:10px; color:var(--seoul-blue); font-weight:700; margin-left:auto;">길찾기 ➔</span>
             </div>
@@ -954,7 +977,7 @@
     syncPlanCompletion();
     const pDesc = document.getElementById('planner-summary-desc');
     if (pDesc) {
-      pDesc.innerText = `체크리스트를 완료하면 다음 일정의 실시간 혼잡도를 분석합니다. 카드를 누르면 상세 길안내가 제공됩니다.`;
+      pDesc.innerText = `연결된 지역의 혼잡도를 참고합니다. 매장별 대기 인원은 제공하지 않습니다. 카드를 누르면 상세 길안내가 제공됩니다.`;
     }
   }
 
@@ -974,7 +997,7 @@
       const nextIdx = currentIdx + 1;
       if (nextIdx < window.currentDisplayedSpots.length) {
         const nextSpot = window.currentDisplayedSpots[nextIdx];
-        if (nextSpot && nextSpot.congestion >= 70) {
+        if (nextSpot && window.cityShouldWarn?.(nextSpot)) {
           window.pendingCrowdTargetIndex = nextIdx;
           const targetNameEl = document.getElementById('crowd-spot-name');
           if (targetNameEl) targetNameEl.innerText = nextSpot.title;
@@ -1649,7 +1672,7 @@
 
 (() => {
   // For a separate backend, set this to its HTTPS endpoint; never put a key here.
-  const endpoint=window.SEOULMATE_WEATHER_ENDPOINT||'/api/weather';
+  const endpoint=window.SEOULMATE_WEATHER_ENDPOINT||((window.SEOULMATE_API_BASE||'').replace(/\/$/,'')+'/api/weather');
   const $=id=>document.getElementById('weather-'+id);
   let generation=0,controller,timer,lastRegion=null,lastData=null,lastCheck=0;
   const names={hongdae:'홍대 · 연남',yeonhui:'연희 · 연남',suyu:'수유 · 우이천',jongno_hyehwa:'혜화 · 종로',gangnam:'강남 · 압구정',seongsu:'성수 · 서울숲',seochon:'서촌 · 부암',euljiro:'을지로 · 신당',jamsil:'잠실 · 송리단길'};
@@ -1676,7 +1699,23 @@
     $('advice').textContent=data.precipitation>0?(data.precipitation===3||data.precipitation===7?'눈이 내리고 있어요. 이동할 때 미끄러운 길을 조심해요.':'우산을 챙겨요. 야외 일정 사이에 실내에서 쉬어가도 좋아요.'):data.temperature>=30?'더운 날씨예요. 물을 챙기고 그늘에서 쉬어가요.':data.temperature<5?'쌀쌀한 날씨예요. 따뜻한 겉옷을 챙겨요.':'다음 장소로 출발하기 전, 날씨를 한 번 확인해요.';
     $('status').textContent=isDemo?'API 연결 전에는 예시 날씨로 화면을 확인할 수 있어요.':stale?'최신 관측이 늦어지고 있어요. 관측 시각을 확인해주세요.':'이 화면에서 10분마다 확인해요. 관측값은 발표 주기에 따라 갱신돼요.';
   }
+  window.applyCityWeather=function(city){
+    controller?.abort();generation++;$('refresh').disabled=false;
+    window.cityWeatherActive=city;
+    const w=city.weather;
+    const date=w.time.replace(' ','T')+':00+09:00';
+    const precipitation={'없음':0,'비':1,'비/눈':2,'눈':3,'소나기':4,'빗방울':5,'빗방울/눈날림':6,'눈날림':7}[w.precipitation]??null;
+    if(!Number.isFinite(Date.parse(date))){$('temperature').textContent='—';$('condition').textContent='날씨 정보 없음';$('humidity').textContent='—';$('wind').textContent='—';$('rain').textContent='—';$('time').textContent='기준 시각 미제공';}
+    else render({mode:'live',region:window.selectedRegionKey,location:city.area,temperature:w.temperature,humidity:w.humidity,wind:w.wind,rain:w.rain!==''&&Number.isFinite(Number(w.rain))?Number(w.rain):null,precipitation,observedAt:date});
+    $('region').textContent=city.area;$('badge').textContent=city.mode==='snapshot'?'공개 샘플 · 저장 자료':'서울시 제공 날씨';
+    $('source').textContent='출처: 서울 실시간 도시데이터 · '+city.area;
+    $('demo').hidden=true;
+    $('status').textContent=city.mode==='snapshot'?'저장된 공개 샘플입니다. 현재 여행 지역의 날씨가 아닙니다.':'조회 지역 기준입니다. 관측 시각을 확인해주세요.';
+  };
+  window.clearCityWeather=function(){window.cityWeatherActive=null;load();};
   async function load(){
+    if(window.cityWeatherActive){window.applyCityWeather(window.cityWeatherActive);return;}
+
     controller?.abort();controller=new AbortController();const seq=++generation;
     const region=window.selectedRegionKey||'hongdae';lastRegion=region;lastCheck=Date.now();
     if(lastData?.region!==region){lastData=null;$('temperature').textContent='—';$('condition').textContent='날씨 확인 중';$('humidity').textContent='—';$('wind').textContent='—';$('rain').textContent='—';$('time').textContent='';$('badge').textContent='확인 중';$('region').textContent=names[region]||'서울';}
@@ -1711,6 +1750,81 @@
   const prior=updateUI;updateUI=function(){prior();activate();};
   document.addEventListener('visibilitychange',activate);
   window.addEventListener('pagehide',()=>{clearInterval(timer);controller?.abort();generation++;});
+})();
+
+
+const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "areaCode": "POI009", "fetchedAt": "2026-09-11T07:14:08.355Z", "source": "서울 열린데이터광장 · 실시간 도시데이터", "crowd": {"level": "약간 붐빔", "message": "사람들이 몰려있을 가능성이 크고 붐빈다고 느낄 수 있어요. 인구밀도가 높은 구간에서는 도보 이동시 부딪힘이 발생할 수 있어요.", "time": "2026-09-11 15:40", "replaced": false, "forecast": [{"time": "2026-09-11 17:00", "level": "약간 붐빔"}, {"time": "2026-09-11 18:00", "level": "약간 붐빔"}, {"time": "2026-09-11 19:00", "level": "보통"}, {"time": "2026-09-11 20:00", "level": "보통"}, {"time": "2026-09-11 21:00", "level": "여유"}, {"time": "2026-09-11 22:00", "level": "여유"}]}, "weather": {"temperature": 25.6, "humidity": 42, "wind": 3.2, "precipitation": "없음", "rain": "-", "message": "비 또는 눈 소식이 없어요.", "time": "2026-09-11 16:00", "sunset": "18:47", "uv": "보통", "uvMessage": "2-3시간 햇볕에 노출 시 피부 화상을 입을 수 있어요.외출시 모자나 선글라스를 착용해주세요.자외선 차단제를 발라주세요.", "pm25": {"grade": "점검중", "value": null}, "pm10": {"grade": "점검중", "value": null}, "airMessage": "원본 시스템 서비스 점검중입니다.", "forecast": [{"time": "202609111700", "temperature": "24", "sky": "흐림", "rainChance": 20}, {"time": "202609111800", "temperature": "23", "sky": "구름많음", "rainChance": 20}, {"time": "202609111900", "temperature": "23", "sky": "구름많음", "rainChance": 20}, {"time": "202609112000", "temperature": "22", "sky": "구름많음", "rainChance": 0}, {"time": "202609112100", "temperature": "21", "sky": "구름많음", "rainChance": 20}, {"time": "202609112200", "temperature": "20", "sky": "구름많음", "rainChance": 20}]}};
+(() => {
+  const $=id=>document.getElementById('city-'+id);
+  const endpoint=(window.SEOULMATE_API_BASE||'').replace(/\/$/,'')+'/api/city';
+  const cache=new Map();let seq=0,controller,timer,lastRegion=null;
+  const planAreas={HD_1:'연남동',HD_2:'홍대 관광특구'};
+  const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'서울숲공원'};
+  const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
+  const time=t=>t||'기준 시각 미제공';
+  const fresh=d=>d?.mode==='live'&&!d.crowd.replaced&&Date.now()-Date.parse(d.crowd.time.replace(' ','T')+':00+09:00')<15*60000;
+  function rows(target,items,empty){const root=$(target);root.replaceChildren();if(!items.length){root.append(node('p',empty));return;}items.forEach(item=>root.append(item));}
+  function block(title,body){const e=node('div');e.className='city-row';e.append(node('strong',title),node('p',body));return e;}
+  function render(d){
+    const snapshot=d.mode==='snapshot';
+    $('content').hidden=false;$('area-name').textContent=d.area;
+    $('badge').textContent=snapshot?'공개 샘플 · 저장 자료':'서울시 데이터';
+    $('crowd').textContent=d.crowd.level||'정보 없음';
+    $('message').textContent=d.crowd.message||'혼잡도 메시지가 없습니다.';
+    $('time').textContent='인구 기준 '+time(d.crowd.time)+(snapshot?' · 현재 여행 지역의 실시간 값이 아닙니다':fresh(d)?'':' · 지연 또는 대체 자료, 경고 판단에서 제외');
+    rows('forecast',d.crowd.forecast.map(f=>block(f.time.slice(11),f.level)),'혼잡도 예측 정보가 없습니다.');
+    const w=d.weather;
+    $('air').textContent='초미세먼지 '+w.pm25.grade+(w.pm25.value===null?'':' · '+w.pm25.value+' ㎍/㎥');
+    $('pm10').textContent='미세먼지 '+w.pm10.grade+(w.pm10.value===null?'':' · '+w.pm10.value+' ㎍/㎥');
+    $('uv').textContent='자외선 '+(w.uv||'정보 없음');$('sunset').textContent='일몰 '+(w.sunset||'정보 없음');
+    $('air-note').textContent=[w.airMessage,w.uvMessage,'날씨·환경 기준 '+time(w.time)].filter(Boolean).join(' ');
+    rows('weather-forecast',w.forecast.map(f=>block(f.time.length===12?f.time.slice(8,10)+':'+f.time.slice(10):f.time,`${f.temperature||'—'}°C · ${f.sky||'정보 없음'} · 강수확률 ${f.rainChance===null?'—':f.rainChance+'%'}`)),'시간대별 예보가 없습니다.');
+    $('status').textContent=snapshot?'서울시 공개 샘플의 실제 응답을 저장한 미리보기입니다. 지역 선택 후 새로고침하면 연결을 다시 확인합니다.':'지역 단위 정보입니다. 개별 가게의 대기 인원·영업 여부를 뜻하지 않습니다.';
+    window.applyCityWeather?.(d);
+    if(!snapshot)cache.set($('area').value,d);
+    refreshBadges();
+  }
+  function refreshBadges(){
+    document.querySelectorAll('#planner-timeline .tag-cong').forEach((el,i)=>{const p=window.currentDisplayedSpots[i],area=planAreas[p?.id],d=cache.get(area);
+      el.className='tag-cong cong-mid';
+      el.textContent=area?(fresh(d)?area+' · '+d.crowd.level:area+' · 정보 확인 필요'):'매장 혼잡도 미제공';
+    });
+  }
+  window.cityShouldWarn=plan=>{
+    const d=cache.get(planAreas[plan.id]);
+    if(!fresh(d))return false;
+    const sensitivity=Number(document.querySelector('#mood-selector .active')?.dataset.congestionSens||50);
+    return d.crowd.level==='붐빔'||(sensitivity>=80&&d.crowd.level==='약간 붐빔');
+  };
+  window.cityAfterPlans=refreshBadges;
+  async function load(){
+    const version=++seq;controller?.abort();controller=new AbortController();
+    $('refresh').disabled=true;$('status').textContent='서울시 지역 정보를 확인하고 있어요…';
+    $('content').hidden=true;$('badge').textContent='조회 중';
+    window.clearCityWeather?.();
+    try{
+      if(location.protocol==='file:'&&!window.SEOULMATE_API_BASE)throw new Error('UNCONFIGURED');
+      const response=await fetch(endpoint+'?area='+encodeURIComponent($('area').value),{signal:controller.signal});
+      if(version!==seq)return;
+      if(!response.ok)throw new Error(response.status===404?'UNCONFIGURED':'ERROR');
+      const d=await response.json();if(version!==seq)return;
+      if(d.mode!=='live')throw new Error('UNCONFIGURED');
+      render(d);
+    }catch(e){if(version!==seq)return;$('badge').textContent='연결 대기';$('status').textContent=e.message==='UNCONFIGURED'?'서버에 서울시 키를 설정하면 연결됩니다. 아래에서 공개 샘플 화면을 먼저 볼 수 있어요.':'조회에 실패했어요. 인증키·서버 연결 상태를 확인한 후 다시 시도해주세요.';refreshBadges();}
+    finally{if(version===seq)$('refresh').disabled=false;}
+  }
+  $('refresh').addEventListener('click',load);$('area').addEventListener('change',load);
+  $('sample').addEventListener('click',()=>{seq++;controller?.abort();$('refresh').disabled=false;$('area').value='광화문·덕수궁';render(CITY_SNAPSHOT);});
+  function activate(){
+    if(window.currentStep===9&&!document.hidden){
+      if(lastRegion!==window.selectedRegionKey){lastRegion=window.selectedRegionKey;if(presets[lastRegion])$('area').value=presets[lastRegion];load();}
+      if(!timer)timer=setInterval(load,300000);
+      refreshBadges();
+    }else{clearInterval(timer);timer=null;seq++;controller?.abort();lastRegion=null;}
+  }
+  const previous=updateUI;updateUI=function(){previous();activate();};
+  document.addEventListener('visibilitychange',activate);
+  window.addEventListener('pagehide',()=>{clearInterval(timer);seq++;controller?.abort();});
 })();
 
   updateUI();
