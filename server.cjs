@@ -30,7 +30,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     } catch { return reply(400,{error:'INVALID_JSON'}); }
   }
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});
-  if(url.pathname==='/health')return reply(200,{ok:true,build:'itinerary-20260912-2',commit:process.env.RENDER_GIT_COMMIT||null});
+  if(url.pathname==='/health')return reply(200,{ok:true,build:'place-resolver-20260912-1',commit:process.env.RENDER_GIT_COMMIT||null});
   if(url.pathname==='/api/city'){
     const area=url.searchParams.get('area');
     if(!AREAS.includes(area))return reply(400,{error:'INVALID_AREA'});

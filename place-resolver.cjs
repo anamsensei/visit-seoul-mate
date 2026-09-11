@@ -61,7 +61,11 @@ function createPlaceResolver(visitService) {
         const found=[]; for (const job of jobs) { try { found.push(...await visitService.list(job)); } catch {} }
         rows=found;
       }
-      const merged = rows.map(p => { const name=String(p.title||p.name||''); return {id:String(p.id),name,area:String(p.address||'미분류'),aliases:[p.title,p.address,p.languages,...(EXTRA_ALIASES[name]||[])].filter(Boolean).map(String)}; }).filter(p=>p.id&&p.name);
+      const merged = rows.map(p => {
+        const name=String(p.title||p.name||'');
+        const extra=Object.entries(EXTRA_ALIASES).filter(([ko])=>normalize(name).includes(normalize(ko))).flatMap(([,a])=>a);
+        return {id:String(p.id),name,area:String(p.address||'미분류'),aliases:[p.title,p.address,p.languages,...(EXTRA_ALIASES[name]||[]),...extra].filter(Boolean).map(String)};
+      }).filter(p=>p.id&&p.name);
       if (!merged.length) return catalog;
       const byId=new Map(catalog.map(p=>[p.id,p]));
       for (const p of merged) { const old=byId.get(p.id); const aliases=[...(old?.aliases||[]),...p.aliases]; byId.set(p.id,{...p,aliases:[...new Set(aliases)],keys:[p.name,...aliases].map(normalize)}); }
