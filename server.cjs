@@ -7,6 +7,8 @@ const {createCityService,AREAS}=require('./city-api.cjs');
 const city=createCityService();
 const {createVisitService}=require('./visit-api.cjs');
 const visit=createVisitService();
+const {createLocalDataService}=require('./local-data.cjs');
+const local=createLocalDataService({visitService:visit});
 function createServer(){return http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   const allowedOrigins=new Set(['https://anamsensei.github.io',...(process.env.ALLOWED_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean)]);
@@ -26,6 +28,12 @@ function createServer(){return http.createServer(async(req,res)=>{
     try{return reply(200,await weather(region));}catch{return reply(502,{error:'WEATHER_UNAVAILABLE',message:'날씨 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'});}
   }
   if(url.pathname==='/api/visit/status')return reply(200,{configured:visit.configured,mode:visit.configured?'live':'unconfigured',source:'visitseoul',message:visit.configured?'비짓서울 API 키가 설정되었습니다.':'Render 환경변수 VISITSEOUL_API_KEY가 필요합니다.'});
+  if(url.pathname==='/api/local/status')return reply(200,{source:'local-signals',providers:local.configured,matchPolicy:'비짓서울 공식 콘텐츠와 매칭된 장소만 후보로 사용'});
+  if(url.pathname==='/api/local/insights'){
+    const query=(url.searchParams.get('query')||'').trim(); if(query.length<2)return reply(400,{error:'QUERY_REQUIRED'});
+    try{return reply(200,{mode:'live',source:'local-signals',...(await local.matchOfficial(query,{categories:(url.searchParams.get('categories')||'').split(',')}))});}
+    catch(error){return reply(502,{mode:'error',source:'local-signals',error:error.message});}
+  }
   if(url.pathname==='/api/visit/recommend'){
     const categories=(url.searchParams.get('categories')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const visited=(url.searchParams.get('visited')||'').split(',').map(s=>s.trim()).filter(Boolean);
