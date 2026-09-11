@@ -643,7 +643,7 @@
       <section class="city-card" aria-label="서울시 날씨 환경 및 혼잡도 정보">
         <div class="city-top"><h2>지금 이 지역은?</h2><span class="city-badge" id="city-badge">연결 대기</span></div>
         <p class="city-hint">서울시 지정 지역 단위 정보 · 가게별 혼잡도가 아닙니다.</p>
-        <div class="city-controls"><select id="city-area" aria-label="서울시 정보 조회 지역"><option>연남동</option><option>홍대 관광특구</option><option>광화문·덕수궁</option><option>서울숲공원</option><option>혜화역</option><option>압구정로데오거리</option><option>합정역</option></select><button id="city-refresh" type="button">새로고침</button></div>
+        <div class="city-controls"><select id="city-area" aria-label="서울시 정보 조회 지역"><option>연남동</option><option>홍대 관광특구</option><option>광화문·덕수궁</option><option>서울숲공원</option><option>혜화역</option><option>압구정로데오거리</option><option>합정역</option><option>을지로</option><option>성수</option><option>잠실</option><option>서촌</option><option>수유</option></select><button id="city-refresh" type="button">새로고침</button></div>
         <p id="city-status" role="status" aria-live="polite">서울시 API 연결 대기 중</p>
         <button class="city-sample" id="city-sample" type="button">공개 샘플로 보기 · 광화문·덕수궁</button>
         <div id="city-content" hidden>
@@ -1786,7 +1786,7 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
   const endpoint=(window.SEOULMATE_API_BASE||'').replace(/\/$/,'')+'/api/city';
   const cache=new Map();let seq=0,controller,timer,lastRegion=null;
   const planAreas={HD_1:'연남동',HD_2:'홍대 관광특구'};
-  const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'서울숲공원'};
+  const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'성수',seochon:'서촌',euljiro:'을지로',jamsil:'잠실',suyu:'수유'};
   const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const crowdScore=level=>({ '여유':20, '보통':50, '약간 붐빔':70, '붐빔':90 }[level] ?? null);
   const time=t=>t||'기준 시각 미제공';
@@ -1865,4 +1865,5 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
 <script async src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" onload="if(window.currentStep===10)renderTravelStory()"></script>
 </body>
 </html>
+
 

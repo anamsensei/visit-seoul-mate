@@ -3,7 +3,7 @@
   const endpoint=(window.SEOULMATE_API_BASE||'').replace(/\/$/,'')+'/api/city';
   const cache=new Map();let seq=0,controller,timer,lastRegion=null;
   const planAreas={HD_1:'연남동',HD_2:'홍대 관광특구'};
-  const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'서울숲공원'};
+  const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'성수',seochon:'서촌',euljiro:'을지로',jamsil:'잠실',suyu:'수유'};
   const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   // 서울시 API는 개별 매장이 아닌 지역 단위 혼잡 단계를 제공합니다.
   // 화면의 70점 기준 경고를 위해 단계만 점수로 환산합니다.
@@ -77,4 +77,5 @@
   document.addEventListener('visibilitychange',activate);
   window.addEventListener('pagehide',()=>{clearInterval(timer);seq++;controller?.abort();});
 })();
+
 

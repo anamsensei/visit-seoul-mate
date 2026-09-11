@@ -1,4 +1,4 @@
-const AREA_CODES={'연남동':'POI073','홍대 관광특구':'POI007','광화문·덕수궁':'POI009','서울숲공원':'POI101','혜화역':'POI054','압구정로데오거리':'POI071','합정역':'POI053'};
+const AREA_CODES={'연남동':'POI073','홍대 관광특구':'POI007','광화문·덕수궁':'POI009','서울숲공원':'POI101','혜화역':'POI054','압구정로데오거리':'POI071','합정역':'POI053','을지로':'을지로','성수':'성수','잠실':'잠실','서촌':'서촌','수유':'수유'};
 const AREAS=Object.keys(AREA_CODES);
 const list=v=>Array.isArray(v)?v:[];
 const first=v=>Array.isArray(v)?v[0]||{}:v||{};
@@ -27,9 +27,10 @@ function createCityService({key=process.env.SEOUL_API_KEY,fetcher=fetch}={}){
       const response=await fetcher(url,{signal:AbortSignal.timeout(15000)});
       if(!response.ok)throw new Error('SEOUL_API_ERROR');
       const data=normalizeCity(await response.json());
-      if(data.areaCode!==AREA_CODES[area])throw new Error('AREA_MISMATCH');
+      if(AREA_CODES[area].startsWith('POI')&&data.areaCode!==AREA_CODES[area])throw new Error('AREA_MISMATCH');
       cache.set(area,{at:Date.now(),data});return data;
     })();pending.set(area,request);try{return await request;}finally{pending.delete(area);}
   };
 }
 module.exports={AREAS,normalizeCity,createCityService};
+
