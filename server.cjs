@@ -31,7 +31,7 @@ function createServer(){return http.createServer(async(req,res)=>{
   if(url.pathname==='/api/local/status')return reply(200,{source:'local-signals',providers:local.configured,matchPolicy:'비짓서울 공식 콘텐츠와 매칭된 장소만 후보로 사용'});
   if(url.pathname==='/api/local/insights'){
     const query=(url.searchParams.get('query')||'').trim(); if(query.length<2)return reply(400,{error:'QUERY_REQUIRED'});
-    try{return reply(200,{mode:'live',source:'local-signals',...(await local.matchOfficial(query,{categories:(url.searchParams.get('categories')||'').split(',')}))});}
+    try{return reply(200,{mode:'live',source:'local-signals',...(await local.matchOfficial(query,{categories:(url.searchParams.get('categories')||'').split(','),mood:url.searchParams.get('mood')||''}))});}
     catch(error){return reply(502,{mode:'error',source:'local-signals',error:error.message});}
   }
   if(url.pathname==='/api/visit/recommend'){
@@ -39,7 +39,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     const visited=(url.searchParams.get('visited')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const region=url.searchParams.get('region')||'hongdae';
     const limit=Math.min(8,Math.max(1,Number(url.searchParams.get('limit')||5)));
-    try{return reply(200,await visit.recommend({region,categories,visited,limit}));}
+    try{const result=await visit.recommend({region,categories,visited,limit}); const localEnabled=Object.values(local.configured).some(Boolean); if(localEnabled){const mood=url.searchParams.get('mood')||''; result.localSignals=await local.matchOfficial(region,{categories,mood});} return reply(200,result);}
     catch(error){return reply(error.message==='VISITSEOUL_NOT_CONFIGURED'?503:502,{mode:'error',source:'visitseoul',error:error.message,message:'비짓서울 API에서 추천 데이터를 가져오지 못했습니다.'});}
   }
   if(url.pathname.startsWith('/api/visit/place/')){
@@ -62,3 +62,5 @@ function createServer(){return http.createServer(async(req,res)=>{
 });}
 if(require.main===module){const port=Number(process.env.PORT||3003);createServer().listen(port,process.env.HOST||'127.0.0.1',()=>console.log(`Seoulmate API: http://127.0.0.1:${port}`));}
 module.exports={createServer};
+
+
