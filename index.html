@@ -624,7 +624,7 @@
       <section class="gps-panel">
         <strong>오늘의 이동을 기록할까요?</strong>
         <p id="trip-gps-status" role="status">위치 권한을 허용하면 이동 거리를 측정합니다.</p>
-        <button id="trip-gps-toggle" onclick="toggleTripGPS()">GPS 기록 시작</button>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;"><button id="trip-gps-toggle" onclick="toggleTripGPS()">GPS 기록 시작</button><button type="button" style="background:#fff;color:#1A56DB;border:1px solid #93C5FD;" onclick="startDemoGPS()">시연용 이동 기록</button></div>
       </section>
 
 
@@ -927,8 +927,8 @@ window.SEOULMATE_API_BASE = ""; // 배포한 서버 주소, 예: https://seoulma
 
     window.currentDisplayedSpots.forEach((plan, idx) => {
       const planNum = idx + 1;
-      const currentPlanHour = Math.floor(startHour + (idx * interval));
-      const timeString = formatHour(currentPlanHour);
+      const currentPlanHour = Number.isFinite(Number(plan.preferredStart)) ? Number(plan.preferredStart) : Math.floor(startHour + (idx * interval));
+      const timeString = plan.mealSlot === 'lunch' ? '13:00 · 점심 식사' : plan.mealSlot === 'dinner' ? '18:00 · 저녁 식사' : formatHour(currentPlanHour);
       const isLast = idx === window.currentDisplayedSpots.length - 1;
 
       let congClass = 'cong-low';
@@ -982,7 +982,7 @@ window.SEOULMATE_API_BASE = ""; // 배포한 서버 주소, 예: https://seoulma
     syncPlanCompletion();
     const pDesc = document.getElementById('planner-summary-desc');
     if (pDesc) {
-      pDesc.innerText = `${window.visitDataMode === 'live' ? '비짓서울 공식 콘텐츠와 좌표로 정리한 일정입니다.' : '시연용 일정입니다. 키를 연결하면 비짓서울 공식 콘텐츠로 바뀝니다.'} 카드를 누르면 상세 길안내가 제공됩니다.`;
+      pDesc.innerText = `${window.visitDataMode === 'live' ? '비짓서울 공식 콘텐츠와 좌표로 정리한 일정입니다.' : '시연용 일정입니다. 키를 연결하면 비짓서울 공식 콘텐츠로 바뀝니다.'} 점심은 13:00, 저녁은 18:00에 음식 장소를 각 1곳만 배정합니다. 카드를 누르면 상세 길안내가 제공됩니다.`;
     }
   }
 
@@ -1292,28 +1292,40 @@ window.SEOULMATE_API_BASE = ""; // 배포한 서버 주소, 예: https://seoulma
     return {total,walking,steps:Math.round(walking/0.7),segments,stays,pointCount:clean.length};
   }
 
-  const tripLog={points:[],watchId:null,breakNext:false,ended:null};
+  const tripLog={points:[],watchId:null,demoTimer:null,demoIndex:0,breakNext:false,ended:null};
   let storyMap=null,storyMode='actual';
   let storyVotes={};try{storyVotes=JSON.parse(localStorage.getItem('seoulmate-story-votes')||'{}');if(!storyVotes||typeof storyVotes!=='object')storyVotes={}}catch(e){}
   const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function gpsStatus(message){const el=document.getElementById('trip-gps-status');if(el)el.textContent=message;}
-  function stopTripGPS(){if(tripLog.watchId!==null){navigator.geolocation.clearWatch(tripLog.watchId);tripLog.watchId=null}tripLog.breakNext=true;const b=document.getElementById('trip-gps-toggle');if(b)b.textContent='GPS 기록 시작';}
+  function stopTripGPS(){if(tripLog.watchId!==null){navigator.geolocation.clearWatch(tripLog.watchId);tripLog.watchId=null}if(tripLog.demoTimer!==null){clearInterval(tripLog.demoTimer);tripLog.demoTimer=null}tripLog.breakNext=true;const b=document.getElementById('trip-gps-toggle');if(b)b.textContent='GPS 기록 시작';}
   
   window.toggleTripGPS=function(){
-    if(tripLog.watchId!==null){stopTripGPS();gpsStatus('기록을 일시 정지했어요. 다시 시작할 수 있어요.');return}
+    if(tripLog.watchId!==null||tripLog.demoTimer!==null){stopTripGPS();gpsStatus('기록을 일시 정지했어요. 다시 시작할 수 있어요.');return}
     if(!navigator.geolocation||!window.isSecureContext){gpsStatus('이 브라우저에서는 위치 기록을 사용할 수 없어요. HTTPS 또는 localhost에서 열어주세요.');return}
     gpsStatus('위치 사용 권한과 GPS 신호를 확인하고 있어요.');
     try{
-      tripLog.watchId=navigator.geolocation.watchPosition(position=>{
+      const onPosition=position=>{
         if(tripLog.watchId===null)return;
         const c=position.coords;
         if(c.accuracy>50){tripLog.breakNext=true;gpsStatus('GPS 오차가 커서 기다리고 있어요. 실외에서 다시 확인해주세요.');return}
         if(tripLog.points.length>=20000){stopTripGPS();gpsStatus('이번 기록의 최대 길이에 도달해 기록을 종료했어요.');return}
         tripLog.points.push({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,time:position.timestamp,breakBefore:tripLog.breakNext});tripLog.breakNext=false;
         gpsStatus(`GPS 기록 중 · ${tripLog.points.length}개 위치 · 오차 약 ${Math.round(c.accuracy)}m`);
-      },error=>{tripLog.breakNext=true;if(error.code===1){stopTripGPS();gpsStatus('위치 권한이 꺼져 있어요. 브라우저 설정에서 허용한 뒤 다시 시작해주세요.')}else gpsStatus('GPS 신호를 기다리고 있어요. 기록하지 못한 구간은 결산에서 제외해요.')},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+      };
+      const options={enableHighAccuracy:true,maximumAge:0,timeout:15000};
+      navigator.geolocation.getCurrentPosition(onPosition,error=>{if(error.code===1){stopTripGPS();gpsStatus('위치 권한이 꺼져 있어요. 브라우저 주소창의 위치 권한을 허용해주세요.')}else gpsStatus('GPS 신호를 기다리고 있어요. 실외에서 잠시 기다려주세요.')},options);
+      tripLog.watchId=navigator.geolocation.watchPosition(onPosition,error=>{tripLog.breakNext=true;if(error.code===1){stopTripGPS();gpsStatus('위치 권한이 꺼져 있어요. 브라우저 주소창의 위치 권한을 허용해주세요.')}else gpsStatus('GPS 신호를 기다리고 있어요. 기록하지 못한 구간은 결산에서 제외해요.')},options);
       document.getElementById('trip-gps-toggle').textContent='GPS 기록 일시 정지';
     }catch(e){stopTripGPS();gpsStatus('위치 기록을 시작하지 못했어요. 브라우저 권한을 확인해주세요.')}
+  };
+
+  window.startDemoGPS=function(){
+    stopTripGPS();
+    const spots=(window.currentDisplayedSpots||[]).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng));
+    if(!spots.length){gpsStatus('시연할 장소 좌표가 아직 없어요.');return;}
+    let segment=0,step=0;tripLog.points=[];tripLog.demoIndex=0;tripLog.breakNext=true;
+    const push=()=>{const target=spots[Math.min(segment,spots.length-1)],prev=spots[Math.max(0,segment-1)]||target;const t=segment?Math.min(1,step/5):1;const lat=segment?prev.lat+(target.lat-prev.lat)*t:target.lat;const lng=segment?prev.lng+(target.lng-prev.lng)*t:target.lng;tripLog.points.push({lat,lng,accuracy:8,time:Date.now(),breakBefore:tripLog.breakNext});tripLog.breakNext=false;step++;if(step>5&&segment<spots.length-1){segment++;step=0}if(segment>=spots.length-1&&step>6){clearInterval(tripLog.demoTimer);tripLog.demoTimer=null;const b=document.getElementById('trip-gps-toggle');if(b)b.textContent='GPS 기록 시작';gpsStatus(`시연용 GPS 기록 완료 · ${tripLog.points.length}개 위치`)}else gpsStatus(`시연용 GPS 기록 중 · ${tripLog.points.length}개 위치`)};
+    tripLog.demoTimer=setInterval(push,1000);push();const b=document.getElementById('trip-gps-toggle');if(b)b.textContent='시연 기록 일시 정지';
   };
 
   function syncPlanCompletion(){
