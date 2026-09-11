@@ -437,14 +437,14 @@
       <div class="form-group">
         <label>관심 카테고리</label>
         <div class="grid-2">
-          <div class="chip" onclick="toggleChip(this)">문화관광</div>
-          <div class="chip" onclick="toggleChip(this)">쇼핑</div>
-          <div class="chip" onclick="toggleChip(this)">숙박 (연계)</div>
-          <div class="chip" onclick="toggleChip(this)">역사관광</div>
-          <div class="chip active" onclick="toggleChip(this)">음식 (미식투어)</div>
-          <div class="chip" onclick="toggleChip(this)">자연관광</div>
-          <div class="chip active" onclick="toggleChip(this)">체험관광</div>
-          <div class="chip" onclick="toggleChip(this)">축제/행사</div>
+          <div class="chip" data-visit-category="문화관광" onclick="toggleChip(this)">문화관광</div>
+          <div class="chip" data-visit-category="쇼핑" onclick="toggleChip(this)">쇼핑</div>
+          <div class="chip" data-visit-category="숙박" onclick="toggleChip(this)">숙박 (연계)</div>
+          <div class="chip" data-visit-category="역사관광" onclick="toggleChip(this)">역사관광</div>
+          <div class="chip active" data-visit-category="음식" onclick="toggleChip(this)">음식 (미식투어)</div>
+          <div class="chip" data-visit-category="자연관광" onclick="toggleChip(this)">자연관광</div>
+          <div class="chip active" data-visit-category="체험관광" onclick="toggleChip(this)">체험관광</div>
+          <div class="chip" data-visit-category="축제/공연/행사" onclick="toggleChip(this)">축제/행사</div>
         </div>
       </div>
 
@@ -619,6 +619,7 @@
       </div>
 
       <div class="step-desc" id="planner-summary-desc" style="margin-bottom: 14px;"></div>
+      <div id="visit-api-status" style="background:#EBF2FE;border:1px solid #BFDBFE;color:#1E40AF;border-radius:10px;padding:10px 12px;font-size:11px;line-height:1.45;margin-bottom:12px;">비짓서울 공식 데이터 연결을 준비하고 있어요.</div>
 
       <section class="gps-panel">
         <strong>오늘의 이동을 기록할까요?</strong>
@@ -775,32 +776,10 @@
 </div>
 
 <script>
-window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포한 서버 주소, 예: https://seoulmate-api.onrender.com
-// [비짓서울 실시간 POI 연동 패치]
-  async function syncLiveVisitSeoul(regionKey) {
-    const base = (window.SEOULMATE_API_BASE || '').replace(/\/$/, '');
-    if (!base) return;
-    try {
-      const res = await fetch(`${base}/api/visitseoul/spots?region=${encodeURIComponent(regionKey || 'hongdae')}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.mode === 'live' && Array.isArray(data.spots) && data.spots.length >= 3) {
-        regionSpotPool[regionKey] = data.spots;
-        if (regionData[regionKey] && data.spots[0].photo) {
-          regionData[regionKey].img = data.spots[0].photo;
-        }
-      }
-    } catch (e) {
-      console.warn('비짓서울 라이브 데이터 동기화 유지:', e);
-    }
-  }
+window.SEOULMATE_API_BASE = ""; // 배포한 서버 주소, 예: https://seoulmate-api.onrender.com
+  window.visitDataMode = 'demo'; // 키 설정 후 visit-ui.js가 live로 전환
+  window.visitLiveSpots = [];
 
-  const prevShowRegion = window.showRegion;
-  window.showRegion = function(key, el) {
-    if (typeof prevShowRegion === 'function') prevShowRegion(key, el);
-    syncLiveVisitSeoul(key);
-  };
-  syncLiveVisitSeoul(window.selectedRegionKey || 'hongdae');
   window.currentStep = 1;
   window.totalSteps = 6;
   window.selectedRegionKey = 'hongdae';
@@ -929,12 +908,14 @@ window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포�
   function renderPlanner() {
     const startHour = parseInt(document.getElementById('start-time-picker')?.value || '11');
     const duration = parseInt(document.getElementById('duration-picker')?.value || '8');
-    const allSpots = (regionSpotPool[window.selectedRegionKey] || regionSpotPool.hongdae).filter(p => !(window.visitedPlaces || []).some(v => v.id === 'hongdae-street' && p.id === 'HD_2'));
+    const sourceSpots = window.visitDataMode === 'live' ? window.visitLiveSpots : (regionSpotPool[window.selectedRegionKey] || regionSpotPool.hongdae);
+    const allSpots = (sourceSpots || []).filter(p => !(window.visitedPlaces || []).some(v => v.id === 'hongdae-street' && p.id === 'HD_2'));
     const spotCount = (duration === 4) ? 3 : (duration === 6 ? 4 : 5);
     window.activeTotalPlans = Math.min(spotCount, allSpots.length);
     window.currentDisplayedSpots = allSpots.slice(0, spotCount);
     buildTimelineUI(startHour, duration);
   }
+  window.renderPlanner = renderPlanner;
 
   function buildTimelineUI(startHour, duration) {
     queueMicrotask(() => window.cityAfterPlans?.());
@@ -1001,7 +982,7 @@ window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포�
     syncPlanCompletion();
     const pDesc = document.getElementById('planner-summary-desc');
     if (pDesc) {
-      pDesc.innerText = `연결된 지역의 혼잡도를 참고합니다. 매장별 대기 인원은 제공하지 않습니다. 카드를 누르면 상세 길안내가 제공됩니다.`;
+      pDesc.innerText = `${window.visitDataMode === 'live' ? '비짓서울 공식 콘텐츠와 좌표로 정리한 일정입니다.' : '시연용 일정입니다. 키를 연결하면 비짓서울 공식 콘텐츠로 바뀝니다.'} 카드를 누르면 상세 길안내가 제공됩니다.`;
     }
   }
 
@@ -1049,7 +1030,12 @@ window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포�
     if (crowdModal) crowdModal.style.display = 'none';
     if (window.pendingCrowdTargetIndex === null) return;
 
-    const altSpot = alternativeSpotDB[window.selectedRegionKey] || alternativeSpotDB.hongdae;
+    let altSpot;
+    if (window.visitDataMode === 'live') {
+      const used = new Set(window.currentDisplayedSpots.map(p => p.id));
+      altSpot = (window.visitLiveSpots || []).find(p => !used.has(p.id));
+      if (!altSpot) { alert('현재 조건에서 바꿀 비짓서울 공식 추천지가 더 없습니다. 기존 일정을 유지해주세요.'); window.pendingCrowdTargetIndex = null; return; }
+    } else altSpot = alternativeSpotDB[window.selectedRegionKey] || alternativeSpotDB.hongdae;
     const oldTitle = window.currentDisplayedSpots[window.pendingCrowdTargetIndex].title;
     
     window.currentDisplayedSpots[window.pendingCrowdTargetIndex] = { ...altSpot };
@@ -1194,6 +1180,7 @@ window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포�
     window.currentStep = 9;
     renderPlanner();
     updateUI();
+    window.loadVisitRecommendations?.();
   };
 
   function updateUI() {
@@ -1484,7 +1471,7 @@ window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포�
     document.getElementById('story-places').innerHTML = done.length ? done.map((s) => `
       <article class="story-place" id="story-place-${escapeHTML(s.id)}">
         <div class="story-photo">
-          <img src="${s.photo || reg.img}" alt="비짓서울 공식 인증 명소 사진" loading="lazy">
+          ${s.photo || window.visitDataMode !== 'live' ? `<img src="${s.photo || reg.img}" alt="비짓서울 공식 인증 명소 사진" loading="lazy">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748B;font-size:11px;background:#E2E8F0;">대표 이미지 준비 중</div>'}
           <span class="photo-badge">비짓서울 공식 사진</span>
         </div>
         
@@ -1853,6 +1840,7 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
 
   updateUI();
 </script>
+<script src="visit-ui.js"></script>
 <script async src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" onload="if(window.currentStep===10)renderTravelStory()"></script>
 </body>
 </html>
