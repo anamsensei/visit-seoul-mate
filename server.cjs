@@ -43,13 +43,14 @@ function createServer(){return http.createServer(async(req,res)=>{
   if(url.pathname==='/api/visit/recommend'){
     const categories=(url.searchParams.get('categories')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const visited=(url.searchParams.get('visited')||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const regions=(url.searchParams.get('regions')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const region=url.searchParams.get('region')||'hongdae';
     const limit=Number(url.searchParams.get('limit')||5);
     const startHour=Number(url.searchParams.get('startHour')||11),duration=Number(url.searchParams.get('duration')||8);
     if(!Number.isInteger(limit)||limit<1||limit>5||!Number.isFinite(startHour)||startHour<0||startHour>23||![4,6,8].includes(duration)||startHour+duration>24)return reply(400,{error:'INVALID_SCHEDULE'});
     // Local insights has its own endpoint. It previously delayed this response without
     // affecting place selection; do not fail an official itinerary on social lookup failure.
-    try{const result=await visit.recommend({region,categories,visited,limit,startHour,duration}); return reply(200,result);}
+    try{const result=await visit.recommend({region,regions,categories,visited,limit,startHour,duration}); return reply(200,result);}
     catch(error){return reply(error.message==='VISITSEOUL_NOT_CONFIGURED'?503:502,{mode:'error',source:'visitseoul',error:error.message,message:'비짓서울 API에서 추천 데이터를 가져오지 못했습니다.'});}
   }
   if(url.pathname.startsWith('/api/visit/place/')){

@@ -4,6 +4,8 @@
   const $=id=>document.getElementById('weather-'+id);
   let generation=0,controller,timer,lastRegion=null,lastData=null,lastCheck=0;
   const names={hongdae:'홍대 · 연남',yeonhui:'연희 · 연남',suyu:'수유 · 우이천',jongno_hyehwa:'혜화 · 종로',gangnam:'강남 · 압구정',seongsu:'성수 · 서울숲',seochon:'서촌 · 부암',euljiro:'을지로 · 신당',jamsil:'잠실 · 송리단길'};
+  const districtRegion={마포구:'hongdae',중구:'euljiro',종로구:'jongno_hyehwa',성동구:'seongsu',송파구:'jamsil',강남구:'gangnam',서초구:'gangnam',용산구:'euljiro',서대문구:'yeonhui',강북구:'suyu',도봉구:'suyu'};
+  const apiRegion=()=>districtRegion[window.selectedRegionKey]||window.selectedRegionKey||'hongdae';
   const sample={dry:{temperature:24.3,humidity:58,wind:2.1,rain:0,precipitation:0},rain:{temperature:20.8,humidity:86,wind:3.6,rain:2.5,precipitation:1},snow:{temperature:-1.2,humidity:74,wind:2.8,rain:0.4,precipitation:3}};
   function demo(){const region=window.selectedRegionKey||'hongdae';return {...sample[$('scenario').value],mode:'demo',region,location:names[region]||'서울'};}
   function render(data){
@@ -45,7 +47,7 @@
     if(window.cityWeatherActive){window.applyCityWeather(window.cityWeatherActive);return;}
 
     controller?.abort();controller=new AbortController();const seq=++generation;
-    const region=window.selectedRegionKey||'hongdae';lastRegion=region;lastCheck=Date.now();
+    const region=apiRegion();lastRegion=region;lastCheck=Date.now();
     if(lastData?.region!==region){lastData=null;$('temperature').textContent='—';$('condition').textContent='날씨 확인 중';$('humidity').textContent='—';$('wind').textContent='—';$('rain').textContent='—';$('time').textContent='';$('badge').textContent='확인 중';$('region').textContent=names[region]||'서울';}
     $('refresh').disabled=true;$('status').textContent='날씨 정보를 확인하고 있어요…';
     const timeout=setTimeout(()=>controller?.abort(),18000);
@@ -70,7 +72,7 @@
   }
   function activate(){
     const active=window.currentStep===9&&!document.hidden;
-    if(active){if(!timer)timer=setInterval(load,600000);if(!lastData||lastRegion!==window.selectedRegionKey||Date.now()-lastCheck>=600000)load();}
+    if(active){if(!timer)timer=setInterval(load,600000);if(!lastData||lastRegion!==apiRegion()||Date.now()-lastCheck>=600000)load();}
     else{clearInterval(timer);timer=null;controller?.abort();generation++;$('refresh').disabled=false;}
   }
   $('refresh').addEventListener('click',load);

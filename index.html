@@ -100,6 +100,12 @@
     .preview-tag { font-size: 10px; font-weight: 700; color: var(--seoul-blue); }
     .preview-title { font-size: 13px; font-weight: 800; color: var(--text-main); margin: 2px 0; }
     .preview-desc { font-size: 11px; color: var(--text-sub); line-height: 1.3; }
+    .district-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0 8px}
+    .district-chip{border:1px solid #D8E2F1;background:#fff;border-radius:10px;padding:9px 8px;text-align:left;color:#334155;cursor:pointer;transition:.15s}
+    .district-chip.active{border-color:#1A56DB;background:#EEF4FF;color:#1746B4;box-shadow:0 0 0 1px #B7CEFF inset}
+    .district-chip span{display:block;font-weight:800;font-size:12px}.district-chip small{display:block;font-size:9px;color:#64748B;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.district-chip.active small{color:#4F72B9}
+    .district-selected{font-size:11px;font-weight:700;color:#1D4ED8;background:#EFF6FF;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5}
+    .seoul-map-label{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#64748B;font-weight:800;font-size:12px;pointer-events:none}
 
     .mate-hero-card {
       background: #FFF; border-radius: 20px; border: 1.5px solid var(--seoul-blue);
@@ -525,10 +531,10 @@
       </div>
     </div>
 
-    <!-- STEP 6: 9대 권역 선택 -->
+    <!-- STEP 6: 서울 25개 자치구 선택 -->
     <div class="step-page" id="step6">
-      <div class="step-title">권역 선택 & 미리보기</div>
-      <div class="step-desc">서울 실시간 도시데이터 API가 연동된 9대 찐 로컬 권역을 골라보세요.</div>
+      <div class="step-title">서울 자치구 선택 & 미리보기</div>
+      <div class="step-desc">여러 자치구를 선택하면 선택한 생활권을 함께 반영해 일정을 구성합니다.</div>
 
       <div class="map-container">
         <svg class="seoul-vector" viewBox="0 0 360 260" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -536,16 +542,11 @@
           <path d="M30,140 C90,125 140,170 210,150 C270,130 310,150 345,145" stroke="#93C5FD" stroke-width="14" stroke-linecap="round"/>
         </svg>
 
-        <div class="map-pin" style="top: 16%; left: 60%;" onclick="showRegion('suyu', this)">수유·우이천</div>
-        <div class="map-pin" style="top: 30%; left: 56%;" onclick="showRegion('jongno_hyehwa', this)">혜화·대학로</div>
-        <div class="map-pin" style="top: 30%; left: 42%;" onclick="showRegion('seochon', this)">서촌·통인</div>
-        <div class="map-pin" style="top: 39%; left: 28%;" onclick="showRegion('yeonhui', this)">연희동</div>
-        <div class="map-pin active" style="top: 48%; left: 20%;" onclick="showRegion('hongdae', this)">홍대·연남</div>
-        <div class="map-pin" style="top: 42%; left: 48%;" onclick="showRegion('euljiro', this)">을지로·신당</div>
-        <div class="map-pin" style="top: 48%; left: 74%;" onclick="showRegion('seongsu', this)">성수·서울숲</div>
-        <div class="map-pin" style="top: 68%; left: 58%;" onclick="showRegion('gangnam', this)">강남·도산</div>
-        <div class="map-pin" style="top: 68%; left: 80%;" onclick="showRegion('jamsil', this)">잠실·송리단</div>
+        <div class="seoul-map-label">서울시 지도정보 플랫폼 연동 예정</div>
       </div>
+
+      <div class="district-picker" id="district-picker" aria-label="서울 25개 자치구 선택"></div>
+      <div class="district-selected" id="district-selected">선택한 자치구 없음</div>
 
       <div class="region-preview" id="preview-box">
         <div class="preview-thumb" id="preview-img" style="background-image: url('https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=1');"></div>
@@ -785,6 +786,8 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   window.currentStep = 1;
   window.totalSteps = 6;
   window.selectedRegionKey = 'hongdae';
+  window.selectedDistricts = new Set(['마포구']);
+  window.selectedRegions = ['마포구'];
   window.completedPlanIds = new Set();
   window.completedCount = 0;
   window.activeTotalPlans = 4;
@@ -1219,7 +1222,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
       const pRegion = document.getElementById('sum-region');
       if (pProfile) pProfile.innerText = `${nick} (${age}세 ${gen}) / 로컬 패션, 카페투어`;
       if (pLogistics) pLogistics.innerText = `출발 위치 예시 · ${startT} 시작 (${dur}시간 코스)`;
-      if (pRegion) pRegion.innerText = reg.title;
+      if (pRegion) pRegion.innerText = Array.isArray(window.selectedRegions) && window.selectedRegions.length ? `${window.selectedRegions.join(' · ')} 생활권` : reg.title;
     } else if (window.currentStep === 8) {
       if (stepIndicator) stepIndicator.innerText = 'MATCHED';
       if (mainFooter) mainFooter.style.display = 'flex';
@@ -1322,6 +1325,27 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
       document.getElementById('trip-gps-toggle').textContent='GPS 기록 일시 정지';
     }catch(e){stopTripGPS();gpsStatus('위치 기록을 시작하지 못했어요. 브라우저 권한을 확인해주세요.')}
   };
+
+  const SEOUL_DISTRICTS = ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'];
+  const DISTRICT_DESC = {마포구:'홍대·연남·망원 생활권',중구:'을지로·명동·남대문 생활권',종로구:'서촌·인사동·혜화 생활권',성동구:'성수·서울숲 생활권',송파구:'잠실·송리단길 생활권',강남구:'강남·압구정 생활권',용산구:'이태원·한남·용리단길 생활권',서대문구:'연희·신촌 생활권'};
+  function renderDistrictPicker(){
+    const root=document.getElementById('district-picker'); if(!root)return;
+    root.innerHTML=SEOUL_DISTRICTS.map(d=>`<button type="button" class="district-chip${window.selectedDistricts.has(d)?' active':''}" data-district="${d}" onclick="toggleDistrict('${d}')"><span>${d}</span><small>${DISTRICT_DESC[d]||'서울 생활권'}</small></button>`).join('');
+    const selected=[...window.selectedDistricts]; const label=document.getElementById('district-selected'); if(label)label.textContent=selected.length?`선택 ${selected.length}곳 · ${selected.join(' · ')}`:'선택한 자치구 없음';
+  }
+  window.toggleDistrict=function(d){
+    if(window.selectedDistricts.has(d)) window.selectedDistricts.delete(d); else window.selectedDistricts.add(d);
+    window.selectedRegions=[...window.selectedDistricts];
+    window.selectedRegionKey=window.selectedRegions[0]||'마포구';
+    renderDistrictPicker();
+    const first=window.selectedRegions[0]; const data=regionData[first==='마포구'?'hongdae':'hongdae'];
+    const t=document.getElementById('preview-title'); const tg=document.getElementById('preview-tag'); const desc=document.getElementById('preview-desc');
+    if(t)t.innerText=window.selectedRegions.length?`${window.selectedRegions.join(' · ')} 생활권`:'자치구를 선택해주세요';
+    if(tg)tg.innerText=window.selectedRegions.length?'선택 생활권 로컬 탐색':'지역 선택 대기';
+    if(desc)desc.innerText=window.selectedRegions.length?'선택한 자치구의 비짓서울 공식 장소를 함께 비교해 맞춤 일정을 구성합니다.':'하나 이상의 자치구를 선택하면 미리보기가 표시됩니다.';
+    window.loadVisitRecommendations?.();
+  };
+  renderDistrictPicker();
 
   window.startDemoGPS=function(){
     stopTripGPS();

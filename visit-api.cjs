@@ -15,6 +15,16 @@ const REGION_KEYWORDS = Object.freeze({
   seongsu: ['성수', '서울숲'], seochon: ['서촌', '통인', '부암', '경복궁', '안국'],
   euljiro: ['을지로', '신당', '청계천', '충무로', '종로', '명동'], jamsil: ['잠실', '송리단', '석촌']
 });
+const DISTRICT_KEYWORDS = Object.freeze({
+  '강남구':['강남','압구정','청담','삼성','개포'], '강동구':['강동','천호','암사','고덕'], '강북구':['강북','수유','미아','우이'],
+  '강서구':['강서','마곡','발산','김포공항'], '관악구':['관악','신림','서울대입구','낙성대'], '광진구':['광진','건대','구의','군자','어린이대공원'],
+  '구로구':['구로','신도림','구로디지털'], '금천구':['금천','가산디지털','독산'], '노원구':['노원','상계','공릉'], '도봉구':['도봉','창동','쌍문'],
+  '동대문구':['동대문','회기','청량리','장한평'], '동작구':['동작','노량진','사당'], '마포구':['마포','홍대','연남','합정','망원'],
+  '서대문구':['서대문','연희','신촌','이대'], '서초구':['서초','양재','반포','고속터미널'], '성동구':['성동','성수','서울숲','뚝섬','왕십리'],
+  '성북구':['성북','성신여대','길음'], '송파구':['송파','잠실','석촌','송리단','가락'], '양천구':['양천','목동','오목교','신정'],
+  '영등포구':['영등포','여의도','문래','당산'], '용산구':['용산','이태원','한남','서울역','삼각지'], '은평구':['은평','연신내','불광'],
+  '종로구':['종로','혜화','대학로','서촌','북촌','인사동','광화문'], '중구':['중구','을지로','명동','남대문','충무로','신당'], '중랑구':['중랑','망우','면목']
+});
 
 const CATEGORY_BY_CODE = Object.fromEntries(Object.entries(CATEGORY_CODES).map(([label, code]) => [code, label]));
 const DEFAULT_BASE = 'https://api-call.visitseoul.net';
@@ -172,13 +182,15 @@ function createVisitService(options = {}) {
     }
     return { mode:'live', source:'visitseoul', total:places.size, categories, districts, failures, generatedAt:new Date().toISOString() };
   }
-  async function recommend({ region = 'hongdae', categories = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
+  async function recommend({ region = 'hongdae', regions = [], categories = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
     if (!configured) return { mode: 'unconfigured', source: 'visitseoul', places: [] };
     const {selectItinerary,valid,restaurant,km,CENTERS}=require('./itinerary.cjs');
     const wanted=[...new Set(categories.filter(c=>CATEGORY_CODES[c]))];
     if(!wanted.length)wanted.push('문화관광','음식','체험관광');
     limit=Math.min(5,Math.max(1,Number(limit)||5));
-    const words=REGION_KEYWORDS[region]||REGION_KEYWORDS.hongdae,excluded=new Set(visited.map(String));
+    const selectedRegions=[...new Set((regions.length?regions:[region]).filter(Boolean))];
+    const words=[...new Set(selectedRegions.flatMap(r=>DISTRICT_KEYWORDS[r]||REGION_KEYWORDS[r]||[r]).concat(REGION_KEYWORDS[region]||[]))];
+    const excluded=new Set(visited.map(String));
     const candidates=new Map(),usable=new Map(),attempted=new Set(),failedCategories=new Set();
     const diagnostics={listRequests:0,listFailures:0,detailRequests:0,detailFailures:0,invalidCoordinates:0,filteredVisited:0};
     const deadline=Date.now()+65000;let successfulLists=0,lastError;
@@ -224,7 +236,7 @@ function createVisitService(options = {}) {
     }
     if(!successfulLists&&lastError)throw lastError;
     if(candidates.size&&!usable.size&&lastError)throw lastError;
-    return {mode:'live',source:'visitseoul',region,categories:wanted,places:result.places,
+    return {mode:'live',source:'visitseoul',region,regions:selectedRegions,categories:wanted,places:result.places,
       complete:result.complete,requestedCount:limit,partial:diagnostics.listFailures+diagnostics.detailFailures>0,
       failedCategories:[...failedCategories],expandedArea:result.expandedArea,
       schedule:{startHour,duration,missingMeals:result.missingMeals,travelMethod:'좌표 거리 기반 도보 추정',hoursVerified:false},
@@ -234,6 +246,6 @@ function createVisitService(options = {}) {
   return { configured, list, detail, inventory, recommend, categories: CATEGORY_CODES };
 }
 
-module.exports = { CATEGORY_CODES, REGION_KEYWORDS, normalizeListItem, normalizeDetail, extractList, createVisitService };
+module.exports = { CATEGORY_CODES, REGION_KEYWORDS, DISTRICT_KEYWORDS, normalizeListItem, normalizeDetail, extractList, createVisitService };
 
 
