@@ -102,14 +102,32 @@ function createVisitService(options = {}) {
   if (typeof fetchImpl !== 'function') throw new Error('FETCH_UNAVAILABLE');
 
   async function requestJson(url, init) {
-    const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(12000) });
-    if (!response.ok) throw new Error(`VISITSEOUL_${response.status}`);
-    const json = await response.json();
-    if (json.result_code != null && Number(json.result_code) !== 200) {
-      const code = Number(json.result_code);
-      throw new Error(Number.isInteger(code) ? `VISITSEOUL_${code}` : 'VISITSEOUL_INVALID_RESPONSE');
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(12000) });
+        if (!response.ok) {
+          const error = new Error(`VISITSEOUL_${response.status}`);
+          if (![408, 425, 429, 500, 502, 503, 504].includes(response.status)) throw error;
+          lastError = error;
+        } else {
+          const json = await response.json();
+          if (json.result_code != null && Number(json.result_code) !== 200) {
+            const code = Number(json.result_code);
+            const error = new Error(Number.isInteger(code) ? `VISITSEOUL_${code}` : 'VISITSEOUL_INVALID_RESPONSE');
+            if (code !== 408 && code !== 429 && code < 500) throw error;
+            lastError = error;
+          } else {
+            return json;
+          }
+        }
+      } catch (error) {
+        lastError = error;
+        if (!/VISITSEOUL_(408|425|429|5\d\d)|TIMEOUT|timed? ?out/i.test(String(error?.message || error))) throw error;
+      }
+      if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 350 * (attempt + 1)));
     }
-    return json;
+    throw lastError || new Error('VISITSEOUL_REQUEST_FAILED');
   }
   async function list({ categoryCode, keyword = '', page = 1 } = {}) {
     if (!configured) throw new Error('VISITSEOUL_NOT_CONFIGURED');
