@@ -1641,11 +1641,18 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
         return {input:r.input,ids:[...new Set(r.ids)]};
       });
     }
-    return {catalog,normalize,resolveDemo,validateResults};
+    function registerPlaces(places) {
+      if(!Array.isArray(places)) return;
+      places.forEach(p=>{
+        if(!p||!p.id||!p.name||catalog.some(x=>x.id===String(p.id))) return;
+        catalog.push({id:String(p.id),name:String(p.name),area:String(p.area||'서울'),aliases:[]});
+      });
+    }
+    return {catalog,normalize,resolveDemo,validateResults,registerPlaces};
   })();
 
   (() => {
-    const {catalog,resolveDemo,validateResults}=VisitedCore;
+    const {catalog,resolveDemo,validateResults,registerPlaces}=VisitedCore;
     const visits=new Map();
     let mode='llm', requestVersion=0;
     const input=document.getElementById('visited-other');
@@ -1697,7 +1704,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
               const apiBase=(window.SEOULMATE_API_BASE||'').replace(/\/$/,'');
               const response=await fetch(apiBase+'/api/places/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:AbortSignal.timeout(25000)});
               if(!response.ok)throw new Error('request');
-              const data=await response.json();matches=validateResults(data.results);
+              const data=await response.json();registerPlaces(data.places);matches=validateResults(data.results);
             } catch {
               // API가 잠시 깨어나는 중이어도 기본 다국어 별칭으로 입력을 잃지 않습니다.
               matches=resolveDemo(text);

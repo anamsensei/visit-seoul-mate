@@ -180,7 +180,7 @@ function createVisitService(options = {}) {
       row.total += 1; row.categories[place.category] = (row.categories[place.category] || 0) + 1;
       categories[place.category] = (categories[place.category] || 0) + 1;
     }
-    return { mode:'live', source:'visitseoul', total:places.size, categories, districts, failures, generatedAt:new Date().toISOString() };
+    return { mode:'live', source:'visitseoul', total:places.size, places:[...places.values()], categories, districts, failures, generatedAt:new Date().toISOString() };
   }
   async function recommend({ region = 'hongdae', regions = [], categories = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
     if (!configured) return { mode: 'unconfigured', source: 'visitseoul', places: [] };

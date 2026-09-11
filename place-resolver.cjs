@@ -42,4 +42,23 @@ function resolve(text) {
   });
 }
 
-module.exports = {catalog, resolve};
+function createPlaceResolver(visitService) {
+  let livePromise;
+  async function liveCatalog() {
+    if (!visitService?.configured) return catalog;
+    if (!livePromise) livePromise = visitService.inventory({maxPages:50}).then(data => {
+      const rows = Array.isArray(data?.places) ? data.places : [];
+      const merged = rows.map(p => ({id:String(p.id), name:String(p.title||p.name||''), area:String(p.address||'미분류'), aliases:[p.title,p.address,p.languages].filter(Boolean).map(String)})).filter(p=>p.id&&p.name);
+      return merged.length ? merged.map(p=>({...p,keys:[p.name,...p.aliases].map(normalize)})) : catalog;
+    }).catch(() => catalog);
+    return livePromise;
+  }
+  async function resolveLive(text) {
+    const source = await liveCatalog();
+    const inputs = String(text ?? '').split(/[,，、;；\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,12);
+    return {results:inputs.map(input=>({input,ids:source.map(p=>({p,score:score(input,p)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=72).slice(0,3).map(x=>x.p.id)})),places:source.map(({id,name,area})=>({id,name,area}))};
+  }
+  return {resolveLive};
+}
+
+module.exports = {catalog, resolve, createPlaceResolver};

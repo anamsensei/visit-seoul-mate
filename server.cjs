@@ -9,7 +9,8 @@ const {createVisitService}=require('./visit-api.cjs');
 const visit=createVisitService();
 const {createLocalDataService}=require('./local-data.cjs');
 const local=createLocalDataService({visitService:visit});
-const {resolve:resolvePlaces}=require('./place-resolver.cjs');
+const {createPlaceResolver}=require('./place-resolver.cjs');
+const placeResolver=createPlaceResolver(visit);
 function createServer(){return http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   const allowedOrigins=new Set(['https://anamsensei.github.io',...(process.env.ALLOWED_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean)]);
@@ -25,7 +26,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     try {
       const parsed=JSON.parse(body||'{}'); const text=String(parsed.text||'').trim();
       if(!text||text.length>600)return reply(400,{error:'TEXT_REQUIRED'});
-      return reply(200,{mode:'multilingual-semantic',source:'visitseoul-catalog',results:resolvePlaces(text)});
+      return reply(200,{mode:'multilingual-semantic',source:'visitseoul-catalog',...(await placeResolver.resolveLive(text))});
     } catch { return reply(400,{error:'INVALID_JSON'}); }
   }
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});
