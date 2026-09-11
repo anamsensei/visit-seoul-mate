@@ -9,7 +9,8 @@ const {createVisitService}=require('./visit-api.cjs');
 const visit=createVisitService();
 function createServer(){return http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
-  if(origin&&origin===process.env.ALLOWED_ORIGIN){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
+  const allowedOrigins=new Set(['https://anamsensei.github.io',...(process.env.ALLOWED_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean)]);
+  if(origin&&allowedOrigins.has(origin)){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
   const reply=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
   let url;try{url=new URL(req.url,'http://localhost');}catch{return reply(400,{error:'INVALID_REQUEST'});}
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});

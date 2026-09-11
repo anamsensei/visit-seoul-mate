@@ -776,7 +776,9 @@
 </div>
 
 <script>
-window.SEOULMATE_API_BASE = ""; // 배포한 서버 주소, 예: https://seoulmate-api.onrender.com
+// GitHub Pages는 화면을 제공하고, API 요청은 Render 서버로 보냅니다.
+window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
+  ? 'https://visit-seoul-mate.onrender.com' : '';
   window.visitDataMode = 'demo'; // 키 설정 후 visit-ui.js가 live로 전환
   window.visitLiveSpots = [];
 
