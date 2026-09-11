@@ -776,7 +776,31 @@
 
 <script>
 window.SEOULMATE_API_BASE = "https://visit-seoul-mate.onrender.com"; // 배포한 서버 주소, 예: https://seoulmate-api.onrender.com
+// [비짓서울 실시간 POI 연동 패치]
+  async function syncLiveVisitSeoul(regionKey) {
+    const base = (window.SEOULMATE_API_BASE || '').replace(/\/$/, '');
+    if (!base) return;
+    try {
+      const res = await fetch(`${base}/api/visitseoul/spots?region=${encodeURIComponent(regionKey || 'hongdae')}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.mode === 'live' && Array.isArray(data.spots) && data.spots.length >= 3) {
+        regionSpotPool[regionKey] = data.spots;
+        if (regionData[regionKey] && data.spots[0].photo) {
+          regionData[regionKey].img = data.spots[0].photo;
+        }
+      }
+    } catch (e) {
+      console.warn('비짓서울 라이브 데이터 동기화 유지:', e);
+    }
+  }
 
+  const prevShowRegion = window.showRegion;
+  window.showRegion = function(key, el) {
+    if (typeof prevShowRegion === 'function') prevShowRegion(key, el);
+    syncLiveVisitSeoul(key);
+  };
+  syncLiveVisitSeoul(window.selectedRegionKey || 'hongdae');
   window.currentStep = 1;
   window.totalSteps = 6;
   window.selectedRegionKey = 'hongdae';
