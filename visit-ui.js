@@ -38,7 +38,10 @@
     const deadline = setTimeout(() => activeController.abort(), 90000);
     try {
       if (location.protocol === 'file:' && !base()) throw new Error('ROUTE_MISSING');
-      const params = new URLSearchParams({ region, categories: categories.join(','), visited: visited.join(','), limit: '5' });
+      const duration=Number(document.getElementById('duration-picker')?.value)||8;
+      const startHour=Number(document.getElementById('start-time-picker')?.value)||11;
+      const limit=duration===4?3:duration===6?4:5;
+      const params = new URLSearchParams({ region, categories: categories.join(','), visited: visited.join(','), limit:String(limit),startHour:String(startHour),duration:String(duration) });
       const response = await fetch(base() + '/api/visit/recommend?' + params, { signal: activeController.signal });
       if (response.status === 404) throw new Error('ROUTE_MISSING');
       const data = await response.json();
@@ -49,8 +52,9 @@
       if (seq !== generation || window.selectedRegionKey !== region) return;
       window.visitDataMode = 'live'; window.visitLiveSpots = data.places;
       window.renderPlanner?.();
-      setStatus(`비짓서울 공식 장소 ${data.places.length}곳을 불러왔어요.` + (data.partial ? ' 일부 조회에 실패해 받은 장소만 표시합니다.' : ''), 'live');
-      if (data.partial) action('추천 다시 조회', loadVisitRecommendations);
+      const complete=data.complete===true;
+      setStatus(complete?`${duration}시간 코스 · 비짓서울 공식 장소 ${data.places.length}곳${data.expandedArea?' · 선택 권역 주변까지 검색 범위를 넓혔어요.':''}`:`일정 구성 미완료 (${data.places.length}/${limit}곳). 식사 시간·이동 조건에 맞는 장소를 더 확보해야 해요.`,complete?'live':'info');
+      if (!complete) action('일정 다시 구성', loadVisitRecommendations);
     } catch (error) {
       if (seq !== generation || window.selectedRegionKey !== region) return;
       window.visitDataMode = 'error'; window.visitLiveSpots = []; window.renderPlanner?.();
@@ -65,3 +69,4 @@
   }
   window.loadVisitRecommendations = loadVisitRecommendations;
 })();
+
