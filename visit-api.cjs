@@ -50,6 +50,7 @@ function normalizeListItem(item) {
   if (!id || !title) return null;
   return { id, title, desc: text(first(item.sumry, item.summary, item.desc, item.description)), category, categoryCode,
     photo: safeUrl(first(item.main_img, item.mainImage, item.image_url, item.thumbnail)),
+    lat: number(first(item.map_position_y, item.latitude, item.lat, item.map_y)), lng: number(first(item.map_position_x, item.longitude, item.lng, item.map_x)),
     updatedAt: text(first(item.updt_dt_text, item.updated_at, item.updateDate)),
     languages: text(item.multi_lang_list) };
 }
@@ -156,10 +157,12 @@ function createVisitService(options = {}) {
     const failedCategories = new Set();
     let successfulLists = 0;
     async function collectLists(keyword) {
-      const results = await Promise.allSettled(fetchCategories.map(category => list({ categoryCode: CATEGORY_CODES[category], keyword })));
+      const jobs=[]; for(const category of fetchCategories){ for(const page of [1,2,3]) jobs.push({category,page}); }
+      const results = await Promise.allSettled(jobs.map(({category,page}) => list({ categoryCode: CATEGORY_CODES[category], keyword, page })));
       return results.flatMap((result, i) => {
+        const category=jobs[i].category;
         if (result.status === 'fulfilled') { successfulLists++; return [result.value]; }
-        failures.push(result.reason); failedCategories.add(fetchCategories[i]); return [];
+        failures.push(result.reason); failedCategories.add(category); return [];
       });
     }
     const lists = await collectLists(regionalKeyword);
@@ -195,3 +198,5 @@ function createVisitService(options = {}) {
 }
 
 module.exports = { CATEGORY_CODES, REGION_KEYWORDS, normalizeListItem, normalizeDetail, extractList, createVisitService };
+
+

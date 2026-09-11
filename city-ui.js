@@ -35,6 +35,7 @@
     document.querySelectorAll('#planner-timeline .tag-cong').forEach((el,i)=>{const p=window.currentDisplayedSpots[i],area=planAreas[p?.id],d=cache.get(area)||cache.get($('area').value);
       el.className='tag-cong cong-mid';
       const score=crowdScore(d?.crowd?.level);
+      if(p&&score!==null&&fresh(d)) p.congestion=score;
       el.textContent=d&&fresh(d)&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
       if(score!==null&&score>=70)el.className='tag-cong cong-high';
     });
@@ -76,3 +77,4 @@
   document.addEventListener('visibilitychange',activate);
   window.addEventListener('pagehide',()=>{clearInterval(timer);seq++;controller?.abort();});
 })();
+
