@@ -1788,6 +1788,7 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
   const planAreas={HD_1:'연남동',HD_2:'홍대 관광특구'};
   const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'서울숲공원'};
   const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
+  const crowdScore=level=>({ '여유':20, '보통':50, '약간 붐빔':70, '붐빔':90 }[level] ?? null);
   const time=t=>t||'기준 시각 미제공';
   const fresh=d=>d?.mode==='live'&&!d.crowd.replaced&&Date.now()-Date.parse(d.crowd.time.replace(' ','T')+':00+09:00')<15*60000;
   function rows(target,items,empty){const root=$(target);root.replaceChildren();if(!items.length){root.append(node('p',empty));return;}items.forEach(item=>root.append(item));}
@@ -1812,16 +1813,19 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
     refreshBadges();
   }
   function refreshBadges(){
-    document.querySelectorAll('#planner-timeline .tag-cong').forEach((el,i)=>{const p=window.currentDisplayedSpots[i],area=planAreas[p?.id],d=cache.get(area);
+    document.querySelectorAll('#planner-timeline .tag-cong').forEach((el,i)=>{const p=window.currentDisplayedSpots[i],area=planAreas[p?.id],d=cache.get(area)||cache.get($('area').value);
       el.className='tag-cong cong-mid';
-      el.textContent=area?(fresh(d)?area+' · '+d.crowd.level:area+' · 정보 확인 필요'):'매장 혼잡도 미제공';
+      const score=crowdScore(d?.crowd?.level);
+      el.textContent=d&&fresh(d)&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
+      if(score!==null&&score>=70)el.className='tag-cong cong-high';
     });
   }
   window.cityShouldWarn=plan=>{
-    const d=cache.get(planAreas[plan.id]);
-    if(!fresh(d))return false;
+    const d=cache.get(planAreas[plan.id])||cache.get($('area').value);
+    const score=crowdScore(d?.crowd?.level);
+    if(!fresh(d)||score===null)return false;
     const sensitivity=Number(document.querySelector('#mood-selector .active')?.dataset.congestionSens||50);
-    return d.crowd.level==='붐빔'||(sensitivity>=80&&d.crowd.level==='약간 붐빔');
+    return score>=90||(sensitivity>=80&&score>=70);
   };
   window.cityAfterPlans=refreshBadges;
   async function load(){
