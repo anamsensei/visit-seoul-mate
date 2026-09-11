@@ -20,6 +20,13 @@ const PLACES = Object.freeze([
 
 const normalize = value => String(value ?? '').normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
 const catalog = PLACES.map(p => ({...p, keys:[p.name,...p.aliases].map(normalize)}));
+const EXTRA_ALIASES = Object.freeze({
+  '선유도공원':['Seonyudo Park','Seonyudo Island'],'문화비축기지':['Oil Tank Culture Park'],
+  '서울식물원':['Seoul Botanic Park','Seoul Botanical Garden'],'망원시장':['Mangwon Market'],
+  '노들섬':['Nodeulseom Island','Nodeul Island'],'서울로7017':['Seoullo 7017','Seoul Skygarden'],
+  '익선동':['Ikseon-dong','Ikseon Hanok Village'],'서촌':['Seochon Village','Seochon'],
+  '이화벽화마을':['Ihwa Mural Village','Ihwa-dong Mural Village']
+});
 
 function score(input, place) {
   const q = normalize(input); if (!q) return 0;
@@ -48,8 +55,11 @@ function createPlaceResolver(visitService) {
     if (!visitService?.configured) return catalog;
     if (!livePromise) livePromise = visitService.inventory({maxPages:50}).then(data => {
       const rows = Array.isArray(data?.places) ? data.places : [];
-      const merged = rows.map(p => ({id:String(p.id), name:String(p.title||p.name||''), area:String(p.address||'미분류'), aliases:[p.title,p.address,p.languages].filter(Boolean).map(String)})).filter(p=>p.id&&p.name);
-      return merged.length ? merged.map(p=>({...p,keys:[p.name,...p.aliases].map(normalize)})) : catalog;
+      const merged = rows.map(p => { const name=String(p.title||p.name||''); return {id:String(p.id),name,area:String(p.address||'미분류'),aliases:[p.title,p.address,p.languages,...(EXTRA_ALIASES[name]||[])].filter(Boolean).map(String)}; }).filter(p=>p.id&&p.name);
+      if (!merged.length) return catalog;
+      const byId=new Map(catalog.map(p=>[p.id,p]));
+      for (const p of merged) { const old=byId.get(p.id); const aliases=[...(old?.aliases||[]),...p.aliases]; byId.set(p.id,{...p,aliases:[...new Set(aliases)],keys:[p.name,...aliases].map(normalize)}); }
+      return [...byId.values()];
     }).catch(() => catalog);
     return livePromise;
   }
