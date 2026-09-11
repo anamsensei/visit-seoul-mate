@@ -53,8 +53,14 @@ function createPlaceResolver(visitService) {
   let livePromise;
   async function liveCatalog() {
     if (!visitService?.configured) return catalog;
-    if (!livePromise) livePromise = visitService.inventory({maxPages:50}).then(data => {
-      const rows = Array.isArray(data?.places) ? data.places : [];
+    if (!livePromise) livePromise = visitService.inventory({maxPages:50}).then(async data => {
+      let rows = Array.isArray(data?.places) ? data.places : [];
+      // 구버전 백엔드가 inventory에 장소 배열을 포함하지 않아도 직접 목록을 보완합니다.
+      if (!rows.length && visitService.list) {
+        const jobs=[]; for (const categoryCode of Object.values(visitService.categories||{})) for (let page=1; page<=5; page++) jobs.push({categoryCode,page});
+        const found=[]; for (const job of jobs) { try { found.push(...await visitService.list(job)); } catch {} }
+        rows=found;
+      }
       const merged = rows.map(p => { const name=String(p.title||p.name||''); return {id:String(p.id),name,area:String(p.address||'미분류'),aliases:[p.title,p.address,p.languages,...(EXTRA_ALIASES[name]||[])].filter(Boolean).map(String)}; }).filter(p=>p.id&&p.name);
       if (!merged.length) return catalog;
       const byId=new Map(catalog.map(p=>[p.id,p]));
