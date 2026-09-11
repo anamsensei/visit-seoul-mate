@@ -27,6 +27,18 @@ const number = value => { const n = Number(value); return Number.isFinite(n) ? n
 const safeUrl = value => { try { const u = new URL(String(value)); return /^https?:$/.test(u.protocol) ? u.toString() : ''; } catch { return ''; } };
 function distanceKm(a, b) { const rad = Math.PI / 180, p = (b.lat - a.lat) * rad, q = (b.lng - a.lng) * rad; const h = Math.sin(p / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(q / 2) ** 2; return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(Math.max(0, 1 - h))); }
 function orderRoute(places) { if (places.length < 2) return places; const remaining = places.slice(); const ordered = [remaining.shift()]; while (remaining.length) { const last = ordered.at(-1); let best = 0, score = Infinity; remaining.forEach((p, i) => { const d = distanceKm(last, p); if (d < score) { score = d; best = i; } }); ordered.push(remaining.splice(best, 1)[0]); } return ordered.map((p, i) => ({ ...p, routeOrder: i + 1 })); }
+function arrangeMealStops(places) {
+  const food = places.filter(p => p.category === '음식');
+  const lunch = food[0] ? { ...food[0], mealSlot: 'lunch', preferredStart: 13 } : null;
+  const dinner = food[1] ? { ...food[1], mealSlot: 'dinner', preferredStart: 18 } : null;
+  const nonFood = places.filter(p => p !== food[0] && p !== food[1]);
+  const ordered = [];
+  if (nonFood.length) ordered.push(nonFood.shift());
+  if (lunch) ordered.push(lunch);
+  while (nonFood.length && ordered.length < places.length - (dinner ? 1 : 0)) ordered.push(nonFood.shift());
+  if (dinner) ordered.push(dinner);
+  return ordered.map((p, i) => ({ ...p, routeOrder: i + 1 }));
+}
 
 function normalizeListItem(item) {
   if (!item || typeof item !== 'object') return null;
@@ -112,25 +124,32 @@ function createVisitService(options = {}) {
   async function recommend({ region = 'hongdae', categories = [], visited = [], limit = 5 } = {}) {
     if (!configured) return { mode: 'unconfigured', source: 'visitseoul', places: [], message: 'Render에 VISITSEOUL_API_KEY를 설정해주세요.' };
     const wanted = categories.filter(category => CATEGORY_CODES[category]).length ? categories.filter(category => CATEGORY_CODES[category]) : ['문화관광', '음식', '체험관광'];
+    // 하루 코스에는 식사 슬롯을 항상 확보하되, 음식 장소는 점심·저녁 최대 1곳씩만 사용합니다.
+    const fetchCategories = [...new Set([...wanted, '음식'])];
     const visitedSet = new Set(visited.map(String)); const words = REGION_KEYWORDS[region] || [];
     const regionalKeyword = words[0] || '';
-    const lists = await Promise.all(wanted.map(category => list({ categoryCode: CATEGORY_CODES[category], keyword: regionalKeyword })));
+    const lists = await Promise.all(fetchCategories.map(category => list({ categoryCode: CATEGORY_CODES[category], keyword: regionalKeyword })));
     const candidates = new Map(); lists.flat().forEach(item => { if (!visitedSet.has(item.id) && !candidates.has(item.id)) candidates.set(item.id, item); });
     // 지역 키워드 검색 결과가 적을 때만 같은 카테고리의 공식 목록으로 보충합니다.
     if (candidates.size < limit) {
-      const broad = await Promise.all(wanted.map(category => list({ categoryCode: CATEGORY_CODES[category] })));
+      const broad = await Promise.all(fetchCategories.map(category => list({ categoryCode: CATEGORY_CODES[category] })));
       broad.flat().forEach(item => { if (!visitedSet.has(item.id) && !candidates.has(item.id)) candidates.set(item.id, item); });
     }
     const scored = [...candidates.values()].map(item => {
       const hay = `${item.title} ${item.desc}`; const hits = words.filter(word => hay.includes(word)).length;
       return { item, score: hits * 5 + (wanted.includes(item.category) ? 2 : 0) };
     }).sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title, 'ko'));
-    const selected = scored.slice(0, Math.max(limit * 2, limit));
-    const detailed = await Promise.all(selected.map(({ item }) => detail(item.id, item).catch(() => normalizeDetail(item, item)).catch(() => null)));
+    const detailSelected = scored.slice(0, Math.max(limit * 2, limit));
+    const detailed = await Promise.all(detailSelected.map(({ item }) => detail(item.id, item).catch(() => normalizeDetail(item, item)).catch(() => null)));
     const places = detailed.filter(p => p && Number.isFinite(p.lat) && Number.isFinite(p.lng)).map((p, index) => ({ ...p, relevance: scored[index]?.score || 0, travelTime: 8, transit: '다음 장소까지 이동', congestion: null }));
     const regional = places.filter(p => words.some(word => `${p.title} ${p.desc} ${p.address}`.includes(word)));
-    const ranked = (regional.length >= Math.min(2, limit) ? regional : places).slice(0, limit);
-    return { mode: 'live', source: 'visitseoul', region, categories: wanted, places: orderRoute(ranked), generatedAt: new Date().toISOString() };
+    const ranked = (regional.length >= Math.min(2, limit) ? regional : places);
+    const food = ranked.filter(p => p.category === '음식');
+    const nonFood = ranked.filter(p => p.category !== '음식');
+    const mealPlaces = food.slice(0, 2);
+    const selected = [...nonFood.slice(0, Math.max(0, limit - mealPlaces.length)), ...mealPlaces].slice(0, limit);
+    const withMeals = arrangeMealStops(selected);
+    return { mode: 'live', source: 'visitseoul', region, categories: [...new Set([...wanted, '음식'])], places: withMeals, generatedAt: new Date().toISOString() };
   }
   return { configured, list, detail, recommend, categories: CATEGORY_CODES };
 }
