@@ -28,6 +28,12 @@ function createServer(){return http.createServer(async(req,res)=>{
     try{return reply(200,await weather(region));}catch{return reply(502,{error:'WEATHER_UNAVAILABLE',message:'날씨 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'});}
   }
   if(url.pathname==='/api/visit/status')return reply(200,{configured:visit.configured,mode:visit.configured?'live':'unconfigured',source:'visitseoul',message:visit.configured?'비짓서울 API 키가 설정되었습니다.':'Render 환경변수 VISITSEOUL_API_KEY가 필요합니다.'});
+  if(url.pathname==='/api/visit/inventory'){
+    if(!visit.configured)return reply(503,{mode:'unconfigured',source:'visitseoul',error:'VISITSEOUL_NOT_CONFIGURED'});
+    const maxPages=Number(url.searchParams.get('maxPages')||50);
+    try{return reply(200,await visit.inventory({maxPages}));}
+    catch(error){return reply(502,{mode:'error',source:'visitseoul',error:error.message});}
+  }
   if(url.pathname==='/api/local/status')return reply(200,{source:'local-signals',providers:local.configured,matchPolicy:'비짓서울 공식 콘텐츠와 매칭된 장소만 후보로 사용'});
   if(url.pathname==='/api/local/insights'){
     const query=(url.searchParams.get('query')||'').trim(); if(query.length<2)return reply(400,{error:'QUERY_REQUIRED'});

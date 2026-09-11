@@ -49,6 +49,7 @@ function normalizeListItem(item) {
   const title = text(first(item.post_sj, item.title, item.name, item.content_name));
   if (!id || !title) return null;
   return { id, title, desc: text(first(item.sumry, item.summary, item.desc, item.description)), category, categoryCode, categoryPath,
+    address: text(first(item.traffic?.new_adres, item.traffic?.adres, item.roadAddress, item.road_address, item.address)),
     photo: safeUrl(first(item.main_img, item.mainImage, item.image_url, item.thumbnail)),
     lat: number(first(item.traffic?.map_position_y,item.map_position_y, item.latitude, item.lat, item.map_y)), lng: number(first(item.traffic?.map_position_x,item.map_position_x, item.longitude, item.lng, item.map_x)),
     updatedAt: text(first(item.updt_dt_text, item.updated_at, item.updateDate)),
@@ -146,6 +147,31 @@ function createVisitService(options = {}) {
     const json = await requestJson(base + INFO_PATH, { method: 'POST', headers: { Accept: 'application/json;charset=UTF-8', 'Content-Type': 'application/json;charset=UTF-8', 'VISITSEOUL-API-KEY': key }, body: JSON.stringify({ cid: id }) });
     const value = normalizeDetail(json, fallback); if (!value) throw new Error('VISITSEOUL_INVALID_DETAIL'); detailCache.set(id, { at: Date.now(), value }); return value;
   }
+  const SEOUL_DISTRICTS = Object.freeze(['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구']);
+  function districtOf(address='') { return SEOUL_DISTRICTS.find(d => String(address).includes(d)) || '미분류'; }
+  async function inventory({ maxPages = 50 } = {}) {
+    if (!configured) return { mode:'unconfigured', source:'visitseoul', total:0, districts:{}, categories:{} };
+    const places = new Map(), failures = [];
+    for (const [category, categoryCode] of Object.entries(CATEGORY_CODES)) {
+      let empty = 0;
+      for (let page = 1; page <= Math.max(1, Math.min(100, Number(maxPages) || 50)); page += 1) {
+        try {
+          const rows = await list({ categoryCode, page });
+          if (!rows.length) { empty += 1; if (empty >= 1) break; }
+          for (const place of rows) if (place?.id && !places.has(place.id)) places.set(place.id, place);
+        } catch (error) { failures.push({ category, page, error: error.message }); break; }
+      }
+    }
+    const districts = Object.fromEntries(SEOUL_DISTRICTS.map(d => [d, { total:0, categories:Object.fromEntries(Object.keys(CATEGORY_CODES).map(c => [c,0])) }]));
+    districts['미분류'] = { total:0, categories:{} };
+    const categories = Object.fromEntries(Object.keys(CATEGORY_CODES).map(c => [c,0]));
+    for (const place of places.values()) {
+      const district = districtOf(place.address); const row = districts[district] || (districts[district] = { total:0, categories:{} });
+      row.total += 1; row.categories[place.category] = (row.categories[place.category] || 0) + 1;
+      categories[place.category] = (categories[place.category] || 0) + 1;
+    }
+    return { mode:'live', source:'visitseoul', total:places.size, categories, districts, failures, generatedAt:new Date().toISOString() };
+  }
   async function recommend({ region = 'hongdae', categories = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
     if (!configured) return { mode: 'unconfigured', source: 'visitseoul', places: [] };
     const {selectItinerary,valid,restaurant,km,CENTERS}=require('./itinerary.cjs');
@@ -205,7 +231,7 @@ function createVisitService(options = {}) {
       diagnostics:{...diagnostics,candidates:candidates.size,usable:usable.size,selected:result.places.length,budgetExceeded:Date.now()>=deadline},
       generatedAt:new Date().toISOString()};
   }
-  return { configured, list, detail, recommend, categories: CATEGORY_CODES };
+  return { configured, list, detail, inventory, recommend, categories: CATEGORY_CODES };
 }
 
 module.exports = { CATEGORY_CODES, REGION_KEYWORDS, normalizeListItem, normalizeDetail, extractList, createVisitService };
