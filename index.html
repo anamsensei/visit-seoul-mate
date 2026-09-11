@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visit Seoul - Seoul Mate Active Tour & Navigation</title>
+  <style>
+    :root {
+      --seoul-blue-deep: #0D2137;
+      --seoul-blue: #1A56DB;
+      --seoul-blue-light: #EBF2FE;
+      --accent-coral: #FF5A5F;
+      --accent-green: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-red: #EF4444;
+      --bg-slate: #F8FAFC;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --text-main: #1E293B;
+      --text-sub: #64748B;
+      --border-color: #E2E8F0;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", Roboto, sans-serif; }
+    body { background-color: #0B132B; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+
+    .phone-container {
+      width: 100%;
+      max-width: 412px;
+      height: 840px;
+      background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%);
+      border-radius: 40px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+      border: 8px solid #1E293B;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header { padding: 16px 20px 10px; position: relative; z-index: 10; display: flex; flex-direction: column; gap: 8px; }
+    .nav-row { display: flex; align-items: center; justify-content: space-between; height: 32px; }
+    .back-btn {
+      background: none; border: none; font-size: 22px; font-weight: 800; color: var(--text-main);
+      cursor: pointer; padding: 4px 10px 4px 0; line-height: 1; display: none;
+    }
+    .brand-logo { font-size: 13px; font-weight: 800; color: var(--seoul-blue); letter-spacing: 1px; }
+    .step-badge { font-size: 11px; font-weight: 700; color: var(--seoul-blue); background: var(--seoul-blue-light); padding: 4px 10px; border-radius: 20px; }
+    .progress-bar { height: 4px; background: #E2E8F0; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .progress-fill { height: 100%; background: var(--seoul-blue); width: 16.6%; transition: width 0.3s ease; }
+
+    .content { flex: 1; padding: 8px 20px; overflow-y: auto; position: relative; z-index: 5; }
+    .step-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+    .step-desc { font-size: 13px; color: var(--text-sub); margin-bottom: 18px; line-height: 1.4; }
+
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+    input[type="text"], input[type="number"], select {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border-color); border-radius: var(--radius);
+      font-size: 13px; background: var(--card-bg); color: var(--text-main); outline: none;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+    .chip {
+      padding: 10px 8px; border: 1.5px solid var(--border-color); border-radius: 10px;
+      background: var(--card-bg); font-size: 12px; font-weight: 600; text-align: center;
+      color: var(--text-main); cursor: pointer; transition: all 0.2s ease;
+    }
+    .chip.active { background: var(--seoul-blue); border-color: var(--seoul-blue); color: #FFF; font-weight: 700; }
+
+    .gps-btn {
+      width: 100%; padding: 13px 14px; background: #FFF; border: 1.5px solid var(--seoul-blue);
+      border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+      gap: 8px; font-size: 13px; font-weight: 700; color: var(--seoul-blue); cursor: pointer;
+    }
+
+    .map-container {
+      position: relative; width: 100%; height: 260px; background: #E2E8F0;
+      border-radius: var(--radius); overflow: hidden; border: 1.5px solid #CBD5E1; margin-bottom: 10px;
+    }
+    .seoul-vector { width: 100%; height: 100%; object-fit: cover; }
+
+    .map-pin {
+      position: absolute; transform: translate(-50%, -50%); background: #FFF; color: var(--seoul-blue);
+      border: 1.5px solid var(--seoul-blue); border-radius: 16px; padding: 3px 6px; font-size: 10px;
+      font-weight: 800; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s; white-space: nowrap;
+    }
+    .map-pin:hover, .map-pin.active {
+      background: var(--seoul-blue); color: #FFF; transform: translate(-50%, -50%) scale(1.08); z-index: 10;
+    }
+
+    .region-preview {
+      background: #FFF; border-radius: var(--radius); border: 1px solid var(--border-color);
+      padding: 10px; display: flex; gap: 10px; align-items: center; margin-top: 6px;
+    }
+    .preview-thumb { width: 64px; height: 64px; border-radius: 8px; background-size: cover; background-position: center; flex-shrink: 0; }
+    .preview-info { flex: 1; min-width: 0; }
+    .preview-tag { font-size: 10px; font-weight: 700; color: var(--seoul-blue); }
+    .preview-title { font-size: 13px; font-weight: 800; color: var(--text-main); margin: 2px 0; }
+    .preview-desc { font-size: 11px; color: var(--text-sub); line-height: 1.3; }
+
+    .mate-hero-card {
+      background: #FFF; border-radius: 20px; border: 1.5px solid var(--seoul-blue);
+      padding: 18px; box-shadow: 0 12px 30px rgba(26, 86, 219, 0.12); position: relative; margin-bottom: 14px;
+    }
+    .mate-badge {
+      position: absolute; top: -11px; left: 18px; background: var(--seoul-blue); color: #FFF;
+      font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .mate-profile { display: flex; gap: 14px; align-items: center; margin-top: 4px; }
+    .mate-avatar {
+      width: 72px; height: 72px; border-radius: 50%; background: #EFF6FF; border: 2.5px solid var(--seoul-blue);
+      display: flex; align-items: center; justify-content: center; font-size: 34px; flex-shrink: 0;
+    }
+    .mate-name { font-size: 18px; font-weight: 800; color: var(--text-main); }
+    .mate-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+    .ootd-box {
+      background: var(--seoul-blue-light); border-radius: 12px; padding: 10px 12px; margin-top: 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ootd-icon { font-size: 22px; }
+    .ootd-title { font-size: 11px; font-weight: 800; color: var(--seoul-blue); }
+    .ootd-desc { font-size: 12px; font-weight: 600; color: var(--text-main); margin-top: 2px; }
+
+    .speech-bubble {
+      background: #F1F5F9; border-left: 4px solid var(--seoul-blue); border-radius: 0 12px 12px 0;
+      padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-main); line-height: 1.45; margin: 12px 0;
+    }
+
+    .planner-header {
+      background: #FFF; border-radius: var(--radius); padding: 14px; border: 1px solid var(--border-color);
+      margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .planner-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .planner-mate-chip { font-size: 12px; font-weight: 800; color: var(--seoul-blue); display: flex; align-items: center; gap: 6px; }
+    .rate-text { font-size: 12px; font-weight: 800; color: var(--accent-green); }
+
+    .rate-bar-bg { height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; }
+    .rate-bar-fill { height: 100%; width: 0%; background: var(--accent-green); transition: width 0.4s ease; }
+
+    .timeline-wrap { position: relative; padding-left: 6px; margin-bottom: 24px; }
+    .timeline-item {
+      display: flex; gap: 12px; background: #FFF; border: 1.5px solid var(--border-color);
+      border-radius: 14px; padding: 14px; position: relative; transition: all 0.2s; cursor: pointer;
+    }
+    .timeline-item:hover { border-color: var(--seoul-blue); }
+    .timeline-item.done { background: #F8FAFC; border-color: #E2E8F0; opacity: 0.7; }
+    .timeline-item.done .plan-title { text-decoration: line-through; color: var(--text-sub); }
+
+    .plan-chk-box { display: flex; align-items: flex-start; padding-top: 2px; }
+    .custom-chk {
+      width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--seoul-blue);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .timeline-item.done .custom-chk { background: var(--seoul-blue); }
+    .custom-chk::after { content: '✓'; color: #FFF; font-size: 14px; font-weight: 800; display: none; }
+    .timeline-item.done .custom-chk::after { display: block; }
+
+    .plan-content { flex: 1; }
+    .plan-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+    .plan-time { font-size: 11px; font-weight: 800; color: var(--seoul-blue); }
+    .plan-title { font-size: 14px; font-weight: 800; color: var(--text-main); }
+    .plan-desc { font-size: 12px; color: var(--text-sub); margin-top: 4px; line-height: 1.35; }
+
+    .plan-tags { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+    .tag-badge { font-size: 10px; font-weight: 700; color: #475569; background: #F1F5F9; padding: 3px 6px; border-radius: 4px; }
+    .tag-cong { font-size: 10px; font-weight: 800; padding: 3px 6px; border-radius: 4px; }
+    .cong-low { color: #047857; background: #ECFDF5; }
+    .cong-mid { color: #B45309; background: #FEF3C7; }
+    .cong-high { color: #DC2626; background: #FEE2E2; border: 1px solid #FCA5A5; }
+
+    .transit-connector {
+      padding: 10px 0 10px 36px; display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700; color: var(--text-sub); position: relative;
+    }
+    .transit-connector::before {
+      content: ''; position: absolute; left: 16px; top: 0; bottom: 0; width: 2px; background: #CBD5E1;
+    }
+    .walking-indicator {
+      display: none; align-items: center; gap: 4px; color: var(--accent-coral); font-weight: 800;
+      animation: bounce 1s infinite alternate;
+    }
+    .walking-indicator.active { display: inline-flex; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
+    .finish-tour-wrap {
+      margin-top: 14px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .btn-finish-tour {
+      width: 100%; padding: 16px; border: none; border-radius: var(--radius);
+      background: linear-gradient(135deg, #1E293B 0%, #0D2137 100%);
+      color: #FFF; font-size: 15px; font-weight: 800; cursor: pointer;
+      box-shadow: 0 6px 16px rgba(13, 33, 55, 0.25); display: flex; justify-content: center; align-items: center; gap: 8px;
+    }
+    .finish-sub-text { text-align: center; font-size: 11px; color: var(--text-sub); font-weight: 600; }
+
+    .footer { padding: 14px 20px 24px; display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; }
+    .btn-secondary { background: #E2E8F0; color: var(--text-sub); }
+    .btn-primary { background: var(--seoul-blue); color: #FFF; }
+
+    .step-page { display: none; }
+    .step-page.active { display: block; }
+
+    /* 모달 */
+    .custom-modal-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85);
+      display: none; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 100; padding: 16px;
+    }
+    .modal-card { width: 100%; background: #FFF; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .modal-body { padding: 20px 18px; text-align: center; }
+    .modal-title { font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+    .modal-sub { font-size: 12px; color: var(--text-sub); line-height: 1.45; margin-bottom: 16px; }
+
+    .video-screen { width: 100%; height: 250px; background: #000; position: relative; overflow: hidden; }
+    .video-screen video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .route-modal-card {
+      width: 100%; max-height: 90%; background: #FFF; border-radius: 24px;
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .route-modal-header {
+      padding: 16px; background: var(--seoul-blue); color: #FFF;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .route-map-area { width: 100%; height: 210px; background: #CBD5E1; position: relative; }
+    .route-details-area { flex: 1; padding: 14px; overflow-y: auto; background: #F8FAFC; font-size: 12px; }
+    .route-seg-card {
+      background: #FFF; border: 1px solid var(--border-color); border-radius: 10px;
+      padding: 10px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center;
+    }
+    .route-seg-icon {
+      width: 24px; height: 24px; border-radius: 50%; color: #FFF; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
+    }
+    .icon-walk { background: var(--accent-green); }
+    .icon-transit { background: var(--accent-amber); }
+
+    /* STEP 10 여행이야기 & GPS 발자취 스타일 */
+    .story-hero{background:linear-gradient(135deg,#0D2137,#1A56DB);color:white;border-radius:20px;padding:22px 18px;margin:5px 0 16px;position:relative;overflow:hidden}
+    .story-eyebrow{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:12px}
+    .story-hero h1{font-size:24px;letter-spacing:-0.5px;line-height:1.3;margin:0 0 10px}
+    .story-hero p{font-size:13px;line-height:1.6;opacity:.9}
+    .story-date{font-size:11px;display:block;margin-top:14px;opacity:.7}
+    .story-badge{display:inline-block;font-size:11px;padding:5px 9px;border-radius:6px;background:#EAF1FF;color:#1A56DB;font-weight:700;margin-bottom:10px}
+    .story-badge.demo{color:#92400E;background:#FEF3C7}
+    .story-card{background:white;border:1px solid var(--border-color);border-radius:18px;padding:16px;margin:0 0 14px}
+    .story-card h2{font-size:16px;letter-spacing:-.4px;color:var(--text-main);margin-bottom:5px}
+    .story-small{font-size:12px;line-height:1.7;color:#64748B}
+    .story-completion{display:flex;align-items:center;gap:17px}
+    .story-ring{width:70px;height:70px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;background:conic-gradient(#1A56DB var(--percent),#EAF1FF 0)}
+    .story-ring span{display:grid;place-items:center;width:56px;height:56px;background:#fff;border-radius:50%;font-size:18px;color:#1A56DB;font-weight:800}
+    .story-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+    .story-metric{padding:17px 14px;border:1px solid var(--border-color);border-radius:16px;background:#fff}
+    .story-metric>span{font-size:12px;color:#64748B;display:block}
+    .story-metric strong{font-size:26px;letter-spacing:-1px;color:#0D2137;display:block;margin:6px 0 2px}
+    .story-metric strong small{font-size:13px;margin-left:3px;letter-spacing:0}
+    .story-stay{display:flex;gap:11px;padding:14px 0;border-bottom:1px solid #EAF0F7}
+    .story-stay:last-child{border:0;padding-bottom:2px}
+    .story-stay .stay-symbol{height:38px;width:38px;display:grid;place-items:center;background:#EBF2FE;border-radius:11px;flex-shrink:0;color:#1A56DB;font-size:20px}
+    .story-stay>div:last-child{flex:1}
+    .story-stay .stay-label{font-size:11px;font-weight:800;color:#1A56DB}
+    .story-stay h3{font-size:14px;line-height:1.6;margin:4px 0;color:#1E293B}
+    .stay-duration{font-size:12px;color:#64748B}
+    .story-map{height:250px;border-radius:12px;margin:13px 0 10px;background:#EAF0F7;position:relative;z-index:0;overflow:hidden}
+    .map-caption{font-size:11px;color:#64748B;line-height:1.6}
+    .map-actions{display:flex;gap:7px;margin-top:10px}
+    .map-actions button,.story-outline{background:white;border:1px solid #CBD5E1;border-radius:9px;padding:10px 12px;min-height:40px;color:#1A56DB;font-size:12px;font-weight:700;cursor:pointer}
+    .story-section-title{display:flex;justify-content:space-between;align-items:center;margin:20px 1px 10px}
+    .story-section-title h2{font-size:16px}
+    .story-section-title span{font-size:12px;color:#1A56DB;font-weight:800}
+    
+    /* 장소 카드 및 미니멀 추천 액션바 */
+    .story-place{border:1px solid #E2E8F0;border-radius:18px;overflow:hidden;background:white;margin-bottom:14px}
+    .story-photo{height:150px;position:relative;background:#EAF1FC;overflow:hidden;display:grid;place-items:center}
+    .story-photo img{width:100%;height:100%;object-fit:cover}
+    .photo-badge{position:absolute;left:10px;bottom:10px;background:rgba(13,33,55,0.8);color:#fff;font-size:10px;padding:3px 7px;border-radius:5px}
+    
+    /* 대표사진 바로 아래 위치하는 컴팩트 추천 버튼 바 */
+    .photo-action-bar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 12px; background:#F8FAFC; border-bottom:1px solid #E2E8F0;
+    }
+    .photo-action-label{font-size:11px; font-weight:700; color:#64748B;}
+    .vote-buttons{display:flex; gap:6px;}
+    .vote-buttons button{
+      padding:4px 10px; min-height:28px; border:1px solid #CBD5E1; border-radius:6px;
+      background:#fff; font-size:11px; font-weight:700; color:#64748B; cursor:pointer;
+      display:flex; align-items:center; gap:4px;
+    }
+    .vote-buttons button[aria-pressed=true]{background:#EBF2FE; border-color:#1A56DB; color:#1A56DB;}
+    .vote-buttons button.down[aria-pressed=true]{background:#FFF1F2; border-color:#E78288; color:#AC3841;}
+    .vote-buttons svg{height:13px; width:13px;}
+
+    .story-place-content{padding:14px}
+    .story-place-content h3{font-size:15px;line-height:1.5;color:#0D2137;margin:4px 0}
+    .story-place-tag{font-size:11px;color:#1A56DB;font-weight:700}
+    .vote-feedback{font-size:10px;color:#1A56DB;margin-top:4px}
+    .story-empty{text-align:center;padding:24px 14px;border:1px dashed #C8D3E3;background:#F8FAFC;border-radius:12px;font-size:12px;color:#64748B;line-height:1.8}
+    .gps-panel{border:1px solid #D4E2FB;border-radius:14px;padding:12px;background:#F3F7FF;margin-bottom:14px}
+    .gps-panel strong{font-size:12px;color:#1A56DB}
+    .gps-panel p{font-size:11px;color:#64748B;line-height:1.6;margin:4px 0 8px}
+    .gps-panel button{min-height:38px;border:0;border-radius:8px;color:white;background:#1A56DB;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
+    .story-back{width:100%;margin:8px 0 16px}
+    .story-footnote{text-align:center;color:#94A3B8;font-size:11px;line-height:1.6;margin:0 0 16px}
+    .story-pin{background:#1A56DB;border:2px solid white;border-radius:50%;box-shadow:0 2px 7px #0004;color:white;text-align:center;font-size:11px;font-weight:800;line-height:23px}
+    .story-map-fallback{height:100%;display:grid;place-items:center;text-align:center;padding:20px;color:#64748B;font-size:12px;line-height:1.8}
+    .story-demo-control{width:100%;margin:10px 0 14px}
+
+    /* STEP 2 LLM 다국어 방문지 파싱 스타일 */
+    .visited-box{background:white;border:1px solid #D4E2FB;border-radius:16px;padding:14px;margin:8px 0 16px}
+    .visited-box label{font-size:13px;line-height:1.5;font-weight:700}
+    .visited-box textarea{width:100%;resize:vertical;min-height:70px;max-height:140px;border:1.5px solid #CBD5E1;border-radius:10px;padding:10px;font-size:12px;line-height:1.6;color:#1E293B;margin-top:6px}
+    .visited-box textarea:focus{outline:2px solid #93B4F8;border-color:#1A56DB}
+    .visited-box p,.visited-result small{font-size:11px;color:#64748B;line-height:1.6}
+    .visited-examples,.visited-selected{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+    .visited-examples button,.visited-selected button{padding:8px;border:1px solid #D4E2FB;background:#EBF2FE;color:#1A56DB;border-radius:8px;font-size:11px;cursor:pointer}
+    .visited-mode{display:inline-block;color:#946019;background:#FFF6DB;border-radius:5px;padding:3px 6px;font-size:10px;margin-bottom:8px}
+    .visited-result{border:1px solid #D4E2FB;border-radius:10px;padding:10px;margin-top:8px;background:#F8FAFF}
+    .visited-result strong{display:block;font-size:13px;margin:4px 0}
+    .visited-result button{width:100%;padding:9px 8px;background:#1A56DB;color:white;border:0;border-radius:8px;margin-top:6px;font-size:11px;font-weight:700;cursor:pointer}
+    .visited-selected-heading{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:14px}
+    .visited-selected-heading span{color:#1A56DB}
+  .weather-card{background:linear-gradient(145deg,#F1F7FF 0%,#FFF 76%);border:1px solid #CEDFFC;border-radius:19px;padding:17px;margin:0 0 17px;box-shadow:0 5px 18px #1A56DB08;color:#0D2137}.weather-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.weather-heading{font-size:13px;font-weight:800}.weather-badge{font-size:10px;font-weight:700;color:#047857;background:#E2F6EF;border-radius:20px;padding:5px 8px;white-space:nowrap}.weather-badge.sample{background:#FFF3D6;color:#916516}.weather-place{font-size:11px;color:#64748B;margin:8px 0 12px}.weather-main{display:flex;align-items:center;gap:14px}.weather-art{height:72px;width:72px;border-radius:22px;background:linear-gradient(135deg,#CCE1FF,#EAF4FF);display:grid;place-items:center;font-size:52px;color:#2261C8;flex-shrink:0;line-height:1}.weather-temperature{font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1.15}.weather-temperature small{font-size:19px;font-weight:500;letter-spacing:0;vertical-align:top;display:inline-block;margin-top:6px}.weather-condition{font-size:12px;color:#536580;margin-top:3px}.weather-refresh{margin-left:auto;align-self:flex-start;border:1px solid #D4E2F5;border-radius:10px;background:#FFF;color:#1A56DB;width:38px;height:38px;cursor:pointer;font-size:23px}.weather-refresh:disabled{opacity:.5}.weather-metrics{display:grid;grid-template-columns:repeat(3,1fr);padding:13px 0;margin-top:14px;border-top:1px solid #DFE9F6;border-bottom:1px solid #DFE9F6;text-align:center}.weather-metrics>div+div{border-left:1px solid #DFE9F6}.weather-metrics dt{font-size:10px;color:#64748B}.weather-metrics dd{font-size:13px;font-weight:800;margin-top:6px}.weather-advice{display:flex;align-items:flex-start;gap:8px;background:#E9F2FF;padding:10px 11px;border-radius:10px;margin-top:12px;font-size:11px;line-height:1.7;color:#27518A}.weather-meta{font-size:10px;color:#64748B;line-height:1.7;margin-top:10px;overflow-wrap:anywhere}.weather-status{font-size:10px;color:#64748B;line-height:1.6;margin-top:5px}.weather-demo{margin-top:10px;font-size:10px;color:#64748B}.weather-demo summary{cursor:pointer;padding:5px 0}.weather-demo select{margin-top:7px;padding:8px;font-size:11px}.weather-card.rainy .weather-art{background:linear-gradient(135deg,#DBE6F2,#EEF3FA);color:#5B749D}.weather-card button:focus-visible{outline:3px solid #90B5FA;outline-offset:2px}
+
+</style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+</head>
+<body>
+
+<div class="phone-container">
+  
+  <div class="header">
+    <div class="nav-row">
+      <button class="back-btn" id="top-back-btn" onclick="prevStep()">←</button>
+      <span class="brand-logo">VISIT SEOUL · MATE</span>
+      <span class="step-badge" id="step-indicator">STEP 1 / 6</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </div>
+
+  <div class="content">
+
+    <!-- STEP 1: 기본 정보 -->
+    <div class="step-page active" id="step1">
+      <div class="step-title">기본 정보 입력</div>
+      <div class="step-desc">동행할 서울메이트 페르소나 매칭을 위한 정보입니다.</div>
+      
+      <div class="form-group">
+        <label>닉네임 / Name</label>
+        <input type="text" id="nickname" placeholder="이름을 입력해주세요">
+      </div>
+      <div class="form-group">
+        <label>국적 / Nationality</label>
+        <select id="nationality">
+          <option>태국 (Thailand)</option><option>일본 (Japan)</option><option>대만 (Taiwan)</option>
+          <option>미국 (USA)</option><option>중국 (China)</option><option>기타 국적</option>
+        </select>
+      </div>
+      <div class="form-group grid-2">
+        <div>
+          <label>연령대</label>
+          <input type="number" id="user-age" value="22">
+        </div>
+        <div>
+          <label>성별</label>
+          <select id="user-gender">
+            <option value="male" selected>남성</option>
+            <option value="female">여성</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: 이전 여행 경험 -->
+    <div class="step-page" id="step2">
+      <div class="step-title">방문 경험 제외</div>
+      <div class="step-desc">이미 가본 곳은 제외하고 새로운 로컬 코스로 연결합니다.</div>
+
+      <div class="form-group">
+        <label>서울 방문 횟수</label>
+        <div class="grid-3">
+          <div class="chip" onclick="selectChip(this)">1회 (첫 방문)</div>
+          <div class="chip active" onclick="selectChip(this)">2~3회 (재방문)</div>
+          <div class="chip" onclick="selectChip(this)">4회 이상</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>외래관광객 인기 10대 명소 (가본 곳 제외 체크)</label>
+        <div class="grid-2" style="font-size: 11px;">
+          <div class="chip active" onclick="toggleChip(this)">1. 명동 쇼핑거리</div>
+          <div class="chip active" onclick="toggleChip(this)">2. 경복궁 · 광화문</div>
+          <div class="chip" onclick="toggleChip(this)">3. N서울타워 (남산)</div>
+          <div class="chip" onclick="toggleChip(this)">4. 북촌한옥마을</div>
+          <div class="chip" onclick="toggleChip(this)">5. 홍대 걷고싶은거리</div>
+          <div class="chip" onclick="toggleChip(this)">6. 동대문 DDP</div>
+          <div class="chip" onclick="toggleChip(this)">7. 롯데월드타워</div>
+          <div class="chip" onclick="toggleChip(this)">8. 인사동 쌈지길</div>
+          <div class="chip" onclick="toggleChip(this)">9. 여의도 한강공원</div>
+          <div class="chip" onclick="toggleChip(this)">10. 광장시장</div>
+        </div>
+      </div>
+
+      <section class="visited-box" aria-label="기타 방문 장소 입력">
+        <span class="visited-mode" id="visited-mode">시연 모드 · 다국어 예시 인식</span>
+        <label for="visited-other">기타: 가보신 곳을 입력해주세요</label>
+        <p id="visited-mode-note">편한 언어로 입력하세요. 현재는 등록된 다국어 예시를 인식하며, 실제 AI 연결 전입니다.</p>
+        <textarea id="visited-other" maxlength="600" placeholder="예: Seoul Forest, 広蔵市場&#10;여러 장소는 쉼표나 줄바꿈으로 구분해주세요." aria-describedby="visited-mode-note visited-status"></textarea>
+        <div class="visited-examples" aria-label="다국어 입력 예시">
+          <button type="button" data-place-example="Seoul Forest">🇺🇸 Seoul Forest</button>
+          <button type="button" data-place-example="広蔵市場">🇯🇵 広蔵市場</button>
+          <button type="button" data-place-example="星空图书馆">🇨🇳 星空图书馆</button>
+          <button type="button" data-place-example="메ียงดง">🇹🇭 เมียงดง</button>
+        </div>
+        <button type="button" class="btn btn-primary" id="visited-resolve">장소 확인</button>
+        <p role="status" aria-live="polite" id="visited-status" style="margin-top:6px; color:#1A56DB;">찾은 장소를 확인하면 방문 목록에 추가돼요.</p>
+        <div id="visited-results"></div>
+        <div class="visited-selected-heading">내가 가본 곳 <span id="visited-count">0곳</span></div>
+        <div class="visited-selected" id="visited-selected" aria-label="선택한 방문 장소"></div>
+        <p style="margin-top:6px;">×를 누르면 제외를 취소해요. 선택 내역은 세션 동안 유지됩니다.</p>
+      </section>
+    </div>
+
+    <!-- STEP 3: 테마 & 분위기 선택 -->
+    <div class="step-page" id="step3">
+      <div class="step-title">테마 & 분위기 선택</div>
+      <div class="step-desc">비짓서울 공식 카테고리와 여행 스타일을 알려주세요.</div>
+
+      <div class="form-group">
+        <label>관심 카테고리</label>
+        <div class="grid-2">
+          <div class="chip" onclick="toggleChip(this)">문화관광</div>
+          <div class="chip" onclick="toggleChip(this)">쇼핑</div>
+          <div class="chip" onclick="toggleChip(this)">숙박 (연계)</div>
+          <div class="chip" onclick="toggleChip(this)">역사관광</div>
+          <div class="chip active" onclick="toggleChip(this)">음식 (미식투어)</div>
+          <div class="chip" onclick="toggleChip(this)">자연관광</div>
+          <div class="chip active" onclick="toggleChip(this)">체험관광</div>
+          <div class="chip" onclick="toggleChip(this)">축제/행사</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>선호하는 여행분위기 (혼잡도 민감도 반영)</label>
+        <div class="grid-3" id="mood-selector">
+          <div class="chip" data-congestion-sens="20" onclick="selectChip(this)">활기차고 북적이는</div>
+          <div class="chip active" data-congestion-sens="90" onclick="selectChip(this)">여유롭고 조용한</div>
+          <div class="chip" data-congestion-sens="50" onclick="selectChip(this)">적절히 섞어서</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: 세부 관심사 -->
+    <div class="step-page" id="step4">
+      <div class="step-title">세부 관심사 설정</div>
+      <div class="step-desc">개인의 취향 가중치를 알고리즘에 직접 반영합니다.</div>
+
+      <div class="form-group">
+        <label>오늘 가장 끌리는 관심사</label>
+        <div class="grid-2" style="font-size: 11px;">
+          <div class="chip" onclick="toggleChip(this)">💄 K-뷰티 · 퍼스널컬러</div>
+          <div class="chip active" onclick="toggleChip(this)">🎵 K-POP · 굿즈/엔터</div>
+          <div class="chip" onclick="toggleChip(this)">🏛️ 한국의 역사 · 고궁</div>
+          <div class="chip" onclick="toggleChip(this)">🎬 K-드라마 · 촬영지</div>
+          <div class="chip active" onclick="toggleChip(this)">🧢 로컬 패션 · 빈티지</div>
+          <div class="chip active" onclick="toggleChip(this)">☕ 감성 카페 & 디저트</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>나만의 특별한 관심사 (직접 입력)</label>
+        <input type="text" value="Hongdae vinyl bar, local street food">
+      </div>
+    </div>
+
+    <!-- STEP 5: 여행 조건 설정 -->
+    <div class="step-page" id="step5">
+      <div class="step-title">여행 조건 설정</div>
+      <div class="step-desc">이동 민감도와 시간 제약 조건을 설정해 플래너를 최적화합니다.</div>
+
+      <div class="form-group">
+        <label>출발 거점</label>
+        <div class="gps-btn active" onclick="refreshGPS()">
+          <span>📍</span> <span id="gps-text">현재 위치로 자동 설정 (GPS 연동 완료)</span>
+        </div>
+      </div>
+
+      <div class="form-group grid-2">
+        <div>
+          <label>시작 시간</label>
+          <select id="start-time-picker">
+            <option value="9">09:00 AM</option>
+            <option value="10">10:00 AM</option>
+            <option value="11" selected>11:00 AM</option>
+            <option value="12">12:00 PM</option>
+            <option value="13">01:00 PM</option>
+            <option value="14">02:00 PM</option>
+          </select>
+        </div>
+        <div>
+          <label>이용 가능 시간</label>
+          <select id="duration-picker">
+            <option value="4">약 4시간 (간단 투어)</option>
+            <option value="6">약 6시간 (반일 코스)</option>
+            <option value="8" selected>약 8시간 (전일 코스)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>도보 이동 선호 (이동 민감도 가중치)</label>
+        <div class="grid-3" id="walk-sens-selector">
+          <div class="chip" data-walk-sens="90" onclick="selectChip(this)">최소한만</div>
+          <div class="chip active" data-walk-sens="60" onclick="selectChip(this)">적당한 산책</div>
+          <div class="chip" data-walk-sens="20" onclick="selectChip(this)">많이 걸어도 OK</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: 9대 권역 선택 -->
+    <div class="step-page" id="step6">
+      <div class="step-title">권역 선택 & 미리보기</div>
+      <div class="step-desc">서울 실시간 도시데이터 API가 연동된 9대 찐 로컬 권역을 골라보세요.</div>
+
+      <div class="map-container">
+        <svg class="seoul-vector" viewBox="0 0 360 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M40,100 Q80,30 180,25 Q280,30 325,90 Q345,170 280,225 Q180,240 70,205 Z" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <path d="M30,140 C90,125 140,170 210,150 C270,130 310,150 345,145" stroke="#93C5FD" stroke-width="14" stroke-linecap="round"/>
+        </svg>
+
+        <div class="map-pin" style="top: 16%; left: 60%;" onclick="showRegion('suyu', this)">수유·우이천</div>
+        <div class="map-pin" style="top: 30%; left: 56%;" onclick="showRegion('jongno_hyehwa', this)">혜화·대학로</div>
+        <div class="map-pin" style="top: 30%; left: 42%;" onclick="showRegion('seochon', this)">서촌·통인</div>
+        <div class="map-pin" style="top: 39%; left: 28%;" onclick="showRegion('yeonhui', this)">연희동</div>
+        <div class="map-pin active" style="top: 48%; left: 20%;" onclick="showRegion('hongdae', this)">홍대·연남</div>
+        <div class="map-pin" style="top: 42%; left: 48%;" onclick="showRegion('euljiro', this)">을지로·신당</div>
+        <div class="map-pin" style="top: 48%; left: 74%;" onclick="showRegion('seongsu', this)">성수·서울숲</div>
+        <div class="map-pin" style="top: 68%; left: 58%;" onclick="showRegion('gangnam', this)">강남·도산</div>
+        <div class="map-pin" style="top: 68%; left: 80%;" onclick="showRegion('jamsil', this)">잠실·송리단</div>
+      </div>
+
+      <div class="region-preview" id="preview-box">
+        <div class="preview-thumb" id="preview-img" style="background-image: url('https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=1');"></div>
+        <div class="preview-info">
+          <div class="preview-tag" id="preview-tag">인디 서브컬처 & 연트럴파크</div>
+          <div class="preview-title" id="preview-title">홍대 · 연남 권역</div>
+          <div class="preview-desc" id="preview-desc">골목 소품샵과 버스킹, 감성 펍과 연트럴파크 잔디밭이 어우러진 젊은 로컬의 성지</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7: 매칭 조건 확인 -->
+    <div class="step-page" id="step7">
+      <div class="step-title">매칭 조건 확인</div>
+      <div class="step-desc">설정 데이터를 기반으로 나만의 AI 서울메이트를 매칭합니다.</div>
+
+      <div style="background:#FFF; padding:14px; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--seoul-blue); font-weight:700;">기본 프로필 & 세부 관심사</div>
+        <div style="font-size:12px;color:#64748B;margin-bottom:6px">가본 곳 · 추천 제외: <span id="sum-visited" style="color:#1A56DB;line-height:1.6">선택한 장소 없음</span></div>
+        <div id="sum-profile" style="font-size:13px; font-weight:700; margin-top:2px;">여행자 (22세 남성) / 로컬 패션, 카페투어</div>
+      </div>
+      <div style="background:#FFF; padding:14px; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--seoul-blue); font-weight:700;">출발지 및 일정 조건</div>
+        <div id="sum-logistics" style="font-size:13px; font-weight:700; margin-top:2px;">GPS 현재위치 · 11:00 AM 시작 (8시간 코스)</div>
+      </div>
+      <div style="background:#FFF; padding:14px; border-radius:12px; border:1px solid #E2E8F0;">
+        <div style="font-size:11px; color:var(--seoul-blue); font-weight:700;">선택 로컬 권역</div>
+        <div id="sum-region" style="font-size:13px; font-weight:700; margin-top:2px;">홍대 · 연남 권역</div>
+      </div>
+    </div>
+
+    <!-- STEP 8: 메이트 매칭 완료 카드 -->
+    <div class="step-page" id="step8">
+      <div class="step-title">메이트 매칭 완료! ❤️</div>
+      <div class="step-desc">회원님과 성향과 관심사가 딱 맞는 로컬 친구가 연결되었습니다.</div>
+
+      <div class="mate-hero-card">
+        <div class="mate-badge">VERIFIED LOCAL MATE</div>
+        <div class="mate-profile">
+          <div class="mate-avatar" id="mate-avatar">👦🏻</div>
+          <div>
+            <div class="mate-name" id="mate-fullname">22세 최민서</div>
+            <div class="mate-sub" id="mate-subinfo">동갑내기 메이트 · 로컬 큐레이터</div>
+          </div>
+        </div>
+        
+        <div class="ootd-box">
+          <div class="ootd-icon">🧢</div>
+          <div>
+            <div class="ootd-title" id="mate-ootd-title">TODAY'S OOTD · 스타일 룩</div>
+            <div class="ootd-desc" id="mate-ootd-desc">오버핏 플란넬 셔츠 + 카고 팬츠 + 레트로 헤드폰</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="speech-bubble" id="mate-dialogue">
+        "함께할 22세 메이트와 서울메이트가 되셨습니다! 일정을 함께 하시겠어요?"
+      </div>
+    </div>
+
+    <!-- STEP 9: 1일 로컬 플래너 -->
+    <div class="step-page" id="step9">
+      <div class="planner-header">
+        <div class="planner-meta">
+          <span class="planner-mate-chip" id="planner-mate-name">👦🏻 메이트와 동행 중</span>
+          <span class="rate-text" id="rate-text">달성률 0%</span>
+        </div>
+        <div class="rate-bar-bg">
+          <div class="rate-bar-fill" id="rate-bar"></div>
+        </div>
+      </div>
+
+      <div class="step-desc" id="planner-summary-desc" style="margin-bottom: 14px;"></div>
+
+      <section class="gps-panel">
+        <strong>오늘의 이동을 기록할까요?</strong>
+        <p id="trip-gps-status" role="status">위치 권한을 허용하면 이동 거리를 측정합니다.</p>
+        <button id="trip-gps-toggle" onclick="toggleTripGPS()">GPS 기록 시작</button>
+      </section>
+
+
+      <section class="weather-card" id="weather-card" aria-label="여행 지역의 현재 날씨">
+        <div class="weather-top"><h2 class="weather-heading">지금, 우리 동네 날씨</h2><span class="weather-badge sample" id="weather-badge">예시 날씨</span></div>
+        <p class="weather-place">⌖ <span id="weather-region">홍대 · 연남</span> · 선택한 여행 지역 기준</p>
+        <div class="weather-main"><div class="weather-art" aria-hidden="true" id="weather-icon">◌</div><div><div class="weather-temperature"><span id="weather-temperature">—</span><small>°C</small></div><p class="weather-condition" id="weather-condition">날씨 확인 중</p></div><button type="button" class="weather-refresh" id="weather-refresh" aria-label="날씨 새로고침" title="날씨 새로고침">↻</button></div>
+        <dl class="weather-metrics"><div><dt>습도</dt><dd id="weather-humidity">—</dd></div><div><dt>바람</dt><dd id="weather-wind">—</dd></div><div><dt>1시간 강수량</dt><dd id="weather-rain">—</dd></div></dl>
+        <div class="weather-advice"><span aria-hidden="true">✦</span><p id="weather-advice">다음 장소로 출발하기 전, 날씨를 확인해요.</p></div>
+        <div class="weather-meta"><div id="weather-time"></div><div id="weather-source">연결 예정: 기상청 초단기실황</div></div>
+        <p class="weather-status" id="weather-status" role="status" aria-live="polite"></p>
+        <details class="weather-demo" id="weather-demo"><summary>시연 날씨 바꿔보기</summary><label for="weather-scenario" style="font-size:11px">기획안 화면용 예시</label><select id="weather-scenario"><option value="dry">강수 없음 · 24.3°C</option><option value="rain">비 · 20.8°C</option><option value="snow">눈 · −1.2°C</option></select></details>
+      </section>
+
+      <div class="timeline-wrap" id="planner-timeline"></div>
+
+      <div class="finish-tour-wrap">
+        <button class="btn-finish-tour" onclick="openFinishModal()">
+          <span>🏁</span> 오늘의 서울 투어 종료하기
+        </button>
+        <div class="finish-sub-text">
+          방문 코스를 모두 마쳤다면 일정을 종료하고 메이트 리포트를 발급받으세요.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 10: 오늘의 여행이야기 & GPS 발자취 결산 & 실시간 방명록 -->
+    <div class="step-page" id="step10"></div>
+
+  </div>
+
+  <div class="footer" id="main-footer">
+    <button class="btn btn-secondary" id="prev-btn" onclick="prevStep()" style="display: none;">이전</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextStep()">다음</button>
+  </div>
+
+  <!-- 인트로 영상 모달 -->
+  <div class="custom-modal-overlay" id="intro-video-modal">
+    <div class="modal-card">
+      <div class="video-screen">
+        <video id="hongdae-intro-video" playsinline controls preload="auto" muted>
+          <source src="hongdae_intro.mp4" type="video/mp4">
+          <source src="폰트가_살짝_짜친다_친구야_좀_키치한_폰트_색넣어도_대.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="modal-body">
+        <div class="modal-title" id="video-modal-text">
+          "로컬 투어가 본격적으로 시작되었습니다!"
+        </div>
+        <div class="modal-sub">
+          비짓서울 공식 인증 DB와 실시간 도시데이터 기반으로 일정이 최적화되었습니다.
+        </div>
+        <button class="btn btn-primary" onclick="closeIntroVideo()" style="width: 100%; border-radius: 14px; padding: 14px;">
+          1일 플래너 확인하기 🗺️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 혼잡도 경고 팝업 모달 -->
+  <div class="custom-modal-overlay" id="crowd-single-modal">
+    <div class="modal-card">
+      <div class="modal-body">
+        <div style="display:inline-block; background:#FEE2E2; color:#DC2626; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; margin-bottom:10px;">
+          ⚠️ 다음 목적지 실시간 혼잡도 경보
+        </div>
+        <div class="modal-title" id="crowd-spot-name">연남동 동진시장</div>
+        <div class="modal-sub">
+          현재 다음 목적지는 <strong>추정 인구밀도가 70% 이상</strong>으로 매우 붐비고 있는 상태에요!<br>
+          그럼에도 계속 안내받으시겠어요?
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn btn-primary" onclick="replaceWithAlternative()" style="background:#10B981; border:none;">
+            ✨ 새로운 놀거리 추천받기 (쾌적 대안 교체)
+          </button>
+          <button class="btn btn-secondary" onclick="dismissCrowdModal()">
+            계속 이용하기 (기존 일정 유지)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상세 길찾기 & 지도 모달 -->
+  <div class="custom-modal-overlay" id="route-navigation-modal">
+    <div class="route-modal-card">
+      <div class="route-modal-header">
+        <span style="font-weight: 800; font-size: 13px;">🚶‍♂️ 스마트 길찾기 & 이동 안내</span>
+        <button onclick="closeRouteModal()" style="background:none; border:none; color:#FFF; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="route-map-area" id="kakao-route-map"></div>
+      <div class="route-details-area">
+        <div id="route-summary-box" style="padding: 10px; background:#EBF2FE; border-radius:8px; font-weight:700; color:var(--seoul-blue); margin-bottom:10px;"></div>
+        <div id="route-step-list"></div>
+      </div>
+      <div style="padding: 12px; background: #FFF; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-primary" onclick="closeRouteModal()" style="width: 100%;">확인 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일정 종료 확인 모달 -->
+  <div class="custom-modal-overlay" id="finish-tour-modal">
+    <div class="modal-card">
+      <div class="modal-body">
+        <div style="font-size: 38px; margin-bottom: 10px;">🎉</div>
+        <div class="modal-title">오늘의 서울 로컬 여정을 종료할까요?</div>
+        <div class="modal-sub" id="finish-modal-sub">
+          현재 로컬 코스 달성률은 <strong>0%</strong>입니다.<br>
+          종료 시 메이트와 함께한 발자취 리포트가 생성됩니다.
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" onclick="closeFinishModal()">계속 여행하기</button>
+          <button class="btn btn-primary" onclick="finishTour()">네, 일정 종료할게요</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오픈 리뷰 커뮤니티 피드 모달 -->
+  <div class="custom-modal-overlay" id="community-feed-modal">
+    <div class="modal-card" style="max-height: 85vh; overflow-y: auto;">
+      <div style="padding: 16px; background: #1A56DB; color: #FFF; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 800; font-size: 14px;">🌍 서울 로컬 실시간 공유 피드</span>
+        <button onclick="closeCommunityFeedModal()" style="background:none; border:none; color:#FFF; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px; text-align: left;" id="community-feed-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  window.currentStep = 1;
+  window.totalSteps = 6;
+  window.selectedRegionKey = 'hongdae';
+  window.completedPlanIds = new Set();
+  window.completedCount = 0;
+  window.activeTotalPlans = 4;
+  window.currentPercentage = 0;
+  window.pendingCrowdTargetIndex = null;
+  window.currentDisplayedSpots = [];
+  window.visitedPlaces = [];
+  window.currentMateName = "최민서";
+
+  window.globalReviewsDB = [
+    { name: "John (미국)", badge: "홍대·연남 전설의 마스터", text: "동진시장 안쪽 구제샵 사장님이 너무 친절하셨어요! 인생 티셔츠 건졌습니다 🔥", date: "방금 전" },
+    { name: "Yuki (일본)", badge: "서촌·통인 감성 탐험가", text: "통인시장 엽전 도시락 꼭 체험해보세요! 떡볶이가 정말 맛있습니다.", date: "10분 전" },
+    { name: "Chen (대만)", badge: "성수·서울숲 정복자", text: "성수동 팝업스토어는 주말에 대기가 기니까 평일 오후를 추천해요!", date: "30분 전" }
+  ];
+
+  const koreanNames = {
+    female: {
+      twenties: ["김현지", "이서연", "박채원", "정수아", "최민서", "강지유", "윤다은"],
+      thirties: ["김은지", "박지현", "이수진", "정유미", "최보람", "한소희", "오미경"],
+      forties: ["김선영", "이미경", "박은숙", "최영희", "정순애", "신은경"]
+    },
+    male: {
+      twenties: ["김민재", "이도현", "박준우", "정시우", "최현우", "강도윤", "윤준영"],
+      thirties: ["김태호", "박준석", "이지훈", "정성민", "최영민", "한상우", "오성택"],
+      forties: ["김철수", "박진우", "이상혁", "최동훈", "정대영", "강성훈"]
+    }
+  };
+
+  const regionOOTD = {
+    hongdae: { title: "홍대 빈티지 캐주얼 룩", desc: "오버핏 플란넬 셔츠 + 카고 팬츠 + 레트로 헤드폰", tagline: "인디 서브컬처 & 연트럴파크 큐레이터" },
+    yeonhui: { title: "연희 단정한 골목 산책 룩", desc: "옥스포드 코튼 셔츠 + 슬림 슬랙스 + 레더 토트백", tagline: "단독주택 노포 & 로스터리 큐레이터" },
+    suyu: { title: "수유 아웃도어 고프코어 룩", desc: "가벼운 윈드브레이커 + 와이드 나일론 팬츠 + 트레킹화", tagline: "우이천 수변길 & 북한산 숲뷰 큐레이터" },
+    jongno_hyehwa: { title: "혜화 대학로 레트로 아트 룩", desc: "빈티지 코듀로이 자켓 + 핀턱 치노팬츠 + 캔버스 숄더백", tagline: "소극장 연극 & 낙산 성곽길 큐레이터" },
+    gangnam: { title: "도산 K-트렌드 시크 룩", desc: "모노톤 숏자켓 + 와이드 데님 + 볼캡", tagline: "K-뷰티 & 하이엔드 디저트 큐레이터" },
+    seongsu: { title: "성수 힙스터 스트리트 룩", desc: "오버핏 블레이저 + 실버 미니백 + 스니커즈", tagline: "성수 팝업 & 카페거리 큐레이터" },
+    seochon: { title: "서촌 모던 한옥 산책 룩", desc: "단정한 셔츠 + 코튼 치노 팬츠 + 에코백", tagline: "고즈넉한 돌담길 & 로컬 티하우스 큐레이터" },
+    euljiro: { title: "을지로 빈티지 워크웨어 룩", desc: "초어 자켓 + 데님 팬츠 + 더비 슈즈", tagline: "철공소 힙지로 & 쌀창고 펍 큐레이터" },
+    jamsil: { title: "송파 레이크 파크 산책 룩", desc: "니트 가디건 + 플랫 슈즈 + 캔버스 토트", tagline: "석촌호수 조깅길 & 송리단길 미식 큐레이터" }
+  };
+
+  // 비짓서울 실제 사진 연동 데이터 풀
+  const regionSpotPool = {
+    hongdae: [
+      { id: "HD_1", title: "연남동 동진시장 플리마켓 & 아트 골목", desc: "인디 창작자들의 감성 디자인 소품과 핸드메이드 굿즈 명소", tag: "#쇼핑·체험", transit: "도보 8분", congestion: 40, travelTime: 8, lat: 37.5623, lng: 126.9248, photo: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=1" },
+      { id: "HD_2", title: "홍대 걷고싶은거리 버스킹 & 스트리트 아트 존", desc: "인디 뮤지션들의 라이브 공연과 밤 거리의 열기를 느끼는 코스", tag: "#축제·공연", transit: "도보 10분", congestion: 85, travelTime: 10, lat: 37.5558, lng: 126.9238, photo: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47385&fileTy=POSTIMG&fileNo=1" },
+      { id: "HD_3", title: "와우산로 K-패션 플래그십 숍", desc: "한국 20대 로컬 스트리트 패션과 디자이너 브랜드를 한눈에 보는 쇼핑 스팟", tag: "#쇼핑·패션", transit: "도보 6분", congestion: 55, travelTime: 6, lat: 37.5539, lng: 126.9255, photo: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=46972&fileTy=POSTIMG&fileNo=1" },
+      { id: "HD_4", title: "산울림 소극장 골목 감성 바이닐 카페", desc: "골목 안 아늑한 분위기에서 바이닐 음악과 시그니처 디저트를 즐기는 카페", tag: "#문화관광", transit: "도보 8분", congestion: 35, travelTime: 8, lat: 37.5562, lng: 126.9304, photo: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47386&fileTy=POSTIMG&fileNo=1" },
+      { id: "HD_5", title: "합정 당인리 골목 크래프트 비어 펍", desc: "한국 로컬 수제 맥주와 함께 투어의 하루를 마무리하는 감성 펍", tag: "#나이트라이프", transit: null, congestion: 40, travelTime: 12, lat: 37.5492, lng: 126.9189, photo: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47387&fileTy=POSTIMG&fileNo=1" }
+    ]
+  };
+
+  const alternativeSpotDB = {
+    hongdae: {
+      id: "ALT_HD",
+      title: "연남동 끝자락 한옥 블렌딩 티하우스",
+      desc: "[비짓서울 대체 추천] 혼잡도 20%의 조용하고 고즈넉한 정원형 다도 쉼터",
+      tag: "#비짓서울_힐링",
+      transit: "도보 6분",
+      congestion: 20,
+      travelTime: 6,
+      lat: 37.5662,
+      lng: 126.9208,
+      photo: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=2"
+    }
+  };
+
+  const regionData = {
+    hongdae: { title: "홍대 · 연남 권역", tag: "인디 서브컬처 & 연트럴파크", desc: "골목 소품샵과 버스킹, 감성 펍과 연트럴파크 잔디밭이 어우러진 젊은 로컬의 성지", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=1" },
+    yeonhui: { title: "연희동 · 연남 안골목", tag: "조용한 주택가 & 40년 노포", desc: "외국인 발길이 드문 고즈넉한 단독주택 골목, 로스터리 카페와 중식 노포의 집결지", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=46972&fileTy=POSTIMG&fileNo=1" },
+    suyu: { title: "수유 · 우이천 수유리", tag: "북한산 숲뷰 & 수변 산책", desc: "웅장한 북한산 숲과 우이천의 정취, 전통시장의 정겨운 인심이 살아있는 진짜 로컬", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47385&fileTy=POSTIMG&fileNo=1" },
+    jongno_hyehwa: { title: "혜화 · 대학로 · 종로", tag: "소극장 연극 & 낙산 성곽길", desc: "60년 전통 다방과 붉은 벽돌 미술관, 소극장 연극과 한양도성 성곽 야경이 빛나는 문화예술의 심장", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=2" },
+    gangnam: { title: "강남 · 압구정 도산", tag: "K-뷰티 & 하이엔드 트렌드", desc: "도산공원 골목 카페와 최신 K-패션 쇼룸, 트렌드세터들이 모이는 감각적인 로컬", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47386&fileTy=POSTIMG&fileNo=1" },
+    seongsu: { title: "성수 · 서울숲 권역", tag: "트렌드 팝업 & 붉은 벽돌길", desc: "공장지대 붉은 벽돌 건물의 힙한 변신, 글로벌 브랜드 팝업과 서울숲의 완벽한 조화", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47387&fileTy=POSTIMG&fileNo=1" },
+    seochon: { title: "서촌 · 통인 · 부암", tag: "인왕산 돌담길 & 모던 한옥", desc: "고즈넉한 한옥 마당과 아기자기한 독립 공방, 예술가들의 발자취가 서린 호젓한 산책로", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=1" },
+    euljiro: { title: "을지로 · 신당 힙당동", tag: "철공소 힙지로 & 쌀창고 펍", desc: "낡은 인쇄소와 골목 깊숙이 숨은 감성 카페, 신당 중앙시장의 힙한 야간 미식", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=46972&fileTy=POSTIMG&fileNo=1" },
+    jamsil: { title: "잠실 · 송리단길 · 방이", tag: "석촌호수 & 송리단길 디저트", desc: "호숫가를 따라 걷는 여유로운 조깅과 주택가 골목의 감성 일식·디저트 명소", img: "https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=47385&fileTy=POSTIMG&fileNo=1" }
+  };
+
+  window.selectChip = function(el) {
+    if (!el || !el.parentElement) return;
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  };
+
+  window.toggleChip = function(el) {
+    if (el) el.classList.toggle('active');
+  };
+
+  window.refreshGPS = function() {
+    const gpsText = document.getElementById('gps-text');
+    if (gpsText) {
+      gpsText.innerText = "GPS 위치 재확인 중...";
+      setTimeout(() => {
+        gpsText.innerText = "일정 시작 후 GPS 기록 켜기";
+      }, 400);
+    }
+  };
+
+  window.showRegion = function(key, el) {
+    window.selectedRegionKey = key;
+    document.querySelectorAll('.map-pin').forEach(p => p.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    const data = regionData[key];
+    if (data) {
+      const t = document.getElementById('preview-title');
+      const tg = document.getElementById('preview-tag');
+      const d = document.getElementById('preview-desc');
+      const img = document.getElementById('preview-img');
+      if (t) t.innerText = data.title;
+      if (tg) tg.innerText = data.tag;
+      if (d) d.innerText = data.desc;
+      if (img) img.style.backgroundImage = `url('${data.img}')`;
+    }
+  };
+
+  function formatHour(h) {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayHour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    return `${String(displayHour).padStart(2, '0')}:00 ${period}`;
+  }
+
+  function renderPlanner() {
+    const startHour = parseInt(document.getElementById('start-time-picker')?.value || '11');
+    const duration = parseInt(document.getElementById('duration-picker')?.value || '8');
+    const allSpots = (regionSpotPool[window.selectedRegionKey] || regionSpotPool.hongdae).filter(p => !(window.visitedPlaces || []).some(v => v.id === 'hongdae-street' && p.id === 'HD_2'));
+    const spotCount = (duration === 4) ? 3 : (duration === 6 ? 4 : 5);
+    window.activeTotalPlans = Math.min(spotCount, allSpots.length);
+    window.currentDisplayedSpots = allSpots.slice(0, spotCount);
+    buildTimelineUI(startHour, duration);
+  }
+
+  function buildTimelineUI(startHour, duration) {
+    const container = document.getElementById('planner-timeline');
+    if (!container) return;
+
+    const interval = duration / (window.currentDisplayedSpots.length || 1);
+    let html = '';
+
+    window.currentDisplayedSpots.forEach((plan, idx) => {
+      const planNum = idx + 1;
+      const currentPlanHour = Math.floor(startHour + (idx * interval));
+      const timeString = formatHour(currentPlanHour);
+      const isLast = idx === window.currentDisplayedSpots.length - 1;
+
+      let congClass = 'cong-low';
+      let congLabel = '여유';
+      if (plan.congestion >= 70) {
+        congClass = 'cong-high';
+        congLabel = '매우 붐빔 ⚠️';
+      } else if (plan.congestion > 40) {
+        congClass = 'cong-mid';
+        congLabel = '보통';
+      }
+
+      html += `
+        <div class="timeline-item" id="item-${planNum}" onclick="handlePlanCardClick(${idx})">
+          <div class="plan-chk-box" onclick="event.stopPropagation();">
+            <div class="custom-chk" onclick="togglePlan(${planNum}, ${idx})"></div>
+          </div>
+          <div class="plan-content">
+            <div class="plan-top-row">
+              <span class="plan-time">${timeString} · ${idx === 0 ? '출발 거점 연계' : '동선 연계'}</span>
+            </div>
+            <div class="plan-title">${plan.title}</div>
+            <div class="plan-desc">${plan.desc}</div>
+            <div class="plan-tags">
+              <span class="tag-cong ${congClass}">${congLabel} (${plan.congestion}%)</span>
+              <span class="tag-badge">${plan.tag}</span>
+              <span style="font-size:10px; color:var(--seoul-blue); font-weight:700; margin-left:auto;">길찾기 ➔</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (!isLast) {
+        html += `
+          <div class="transit-connector">
+            <span>${plan.transit || '도보 8분 이동'}</span>
+            <span class="walking-indicator" id="walk-${planNum}">🚶‍♂️ 다음 핫플로 이동 중...</span>
+          </div>
+        `;
+      }
+    });
+
+    container.innerHTML = html;
+    window.completedCount = 0;
+    window.currentPercentage = 0;
+    const rateBar = document.getElementById('rate-bar');
+    const rateText = document.getElementById('rate-text');
+    if (rateBar) rateBar.style.width = '0%';
+    if (rateText) rateText.innerText = '달성률 0%';
+
+    syncPlanCompletion();
+    const pDesc = document.getElementById('planner-summary-desc');
+    if (pDesc) {
+      pDesc.innerText = `체크리스트를 완료하면 다음 일정의 실시간 혼잡도를 분석합니다. 카드를 누르면 상세 길안내가 제공됩니다.`;
+    }
+  }
+
+  window.togglePlan = function(planNum, currentIdx) {
+    const item = document.getElementById(`item-${planNum}`);
+    const walkIndicator = document.getElementById(`walk-${planNum}`);
+    if (!item) return;
+
+    const isDone = item.classList.toggle('done');
+    const planId = window.currentDisplayedSpots[currentIdx].id;
+    if(isDone) window.completedPlanIds.add(planId); else window.completedPlanIds.delete(planId);
+
+    if (isDone) {
+      window.completedCount++;
+      if (walkIndicator) walkIndicator.classList.add('active');
+
+      const nextIdx = currentIdx + 1;
+      if (nextIdx < window.currentDisplayedSpots.length) {
+        const nextSpot = window.currentDisplayedSpots[nextIdx];
+        if (nextSpot && nextSpot.congestion >= 70) {
+          window.pendingCrowdTargetIndex = nextIdx;
+          const targetNameEl = document.getElementById('crowd-spot-name');
+          if (targetNameEl) targetNameEl.innerText = nextSpot.title;
+          setTimeout(() => {
+            const crowdModal = document.getElementById('crowd-single-modal');
+            if (crowdModal && window.currentStep === 9 && window.completedPlanIds.has(planId)) crowdModal.style.display = 'flex';
+          }, 300);
+        }
+      }
+    } else {
+      window.completedCount--;
+      if (walkIndicator) walkIndicator.classList.remove('active');
+    }
+
+    syncPlanCompletion();
+  };
+
+  window.handlePlanCardClick = function(spotIndex) {
+    const targetSpot = window.currentDisplayedSpots[spotIndex];
+    if (targetSpot) openRouteNavigation(targetSpot);
+  };
+
+  window.replaceWithAlternative = function() {
+    const crowdModal = document.getElementById('crowd-single-modal');
+    if (crowdModal) crowdModal.style.display = 'none';
+    if (window.pendingCrowdTargetIndex === null) return;
+
+    const altSpot = alternativeSpotDB[window.selectedRegionKey] || alternativeSpotDB.hongdae;
+    const oldTitle = window.currentDisplayedSpots[window.pendingCrowdTargetIndex].title;
+    
+    window.currentDisplayedSpots[window.pendingCrowdTargetIndex] = { ...altSpot };
+
+    const startHour = parseInt(document.getElementById('start-time-picker')?.value || '11');
+    const duration = parseInt(document.getElementById('duration-picker')?.value || '8');
+    buildTimelineUI(startHour, duration);
+    syncPlanCompletion();
+
+    alert(`✨ 붐비는 '${oldTitle}' 대신 쾌적한 비짓서울 공식 추천지인 '${altSpot.title}'(으)로 일정이 변경되었습니다!`);
+    window.pendingCrowdTargetIndex = null;
+  };
+
+  window.dismissCrowdModal = function() {
+    const crowdModal = document.getElementById('crowd-single-modal');
+    if (crowdModal) crowdModal.style.display = 'none';
+    window.pendingCrowdTargetIndex = null;
+  };
+
+  function openRouteNavigation(spot) {
+    const modal = document.getElementById('route-navigation-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const distanceMeters = Math.round((spot.travelTime || 8) * 67);
+    const walkMinutes = Math.max(1, Math.round(distanceMeters / 67));
+    const calories = Math.round(walkMinutes * 4);
+
+    const sumBox = document.getElementById('route-summary-box');
+    if (sumBox) {
+      sumBox.innerHTML = `📍 목적지: ${spot.title}<br>⏱️ 총 예상 시간: 약 ${spot.travelTime || 8}분 | 🏃 도보 ${distanceMeters}m (${calories} kcal 소모)`;
+    }
+
+    const stepList = document.getElementById('route-step-list');
+    if (stepList) {
+      stepList.innerHTML = `
+        <div class="route-seg-card">
+          <div class="route-seg-icon icon-walk">도</div>
+          <div>
+            <div style="font-weight:800;">현재 위치에서 도보 이동</div>
+            <div style="color:var(--text-sub); font-size:11px;">안내 보행로를 따라 직진 (약 ${walkMinutes}분 소요)</div>
+          </div>
+        </div>
+        <div class="route-seg-card">
+          <div class="route-seg-icon" style="background:var(--seoul-blue);">도</div>
+          <div>
+            <div style="font-weight:800;">${spot.title} 도착</div>
+            <div style="color:var(--text-sub); font-size:11px;">골목 진입 후 안내 표지판 확인</div>
+          </div>
+        </div>
+      `;
+    }
+
+    const mapArea = document.getElementById('kakao-route-map');
+    if (mapArea) {
+      mapArea.innerHTML = `
+        <div style="width:100%; height:100%; background:#CBD5E1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:10px;">
+          <div style="font-size:26px; margin-bottom:4px;">🗺️</div>
+          <div style="font-weight:800; font-size:12px; color:var(--text-main);">스마트 경로 지도 안내</div>
+          <div style="font-size:10.5px; color:var(--text-sub); margin-top:2px;">출발 거점 ➔ ${spot.title} (최적 경로 동기화)</div>
+        </div>
+      `;
+    }
+  }
+
+  window.closeRouteModal = function() {
+    const modal = document.getElementById('route-navigation-modal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.openFinishModal = function() {
+    const modal = document.getElementById('finish-tour-modal');
+    const modalSub = document.getElementById('finish-modal-sub');
+    if (!modal) return;
+    
+    if (window.currentPercentage >= 80) {
+      modalSub.innerHTML = `현재 로컬 코스 달성률은 <strong style="color:#10B981;">${window.currentPercentage}%</strong>로 80%를 돌파했습니다!<br>멋진 서울 로컬 탐방을 완료하고 인증 리포트를 발급받으시겠어요?`;
+    } else {
+      modalSub.innerHTML = `현재 로컬 코스 달성률은 <strong>${window.currentPercentage}%</strong>입니다.<br>아직 방문하지 않은 코스가 있지만 지금 투어를 종료하시겠어요?`;
+    }
+    modal.style.display = 'flex';
+  };
+
+  window.closeFinishModal = function() {
+    const modal = document.getElementById('finish-tour-modal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  function generateMate() {
+    const age = parseInt(document.getElementById('user-age')?.value || '22');
+    const gender = document.getElementById('user-gender')?.value || 'male';
+    const nicknameInput = document.getElementById('nickname')?.value.trim();
+    const nickname = nicknameInput || '여행자';
+
+    let ageGroup = 'twenties';
+    if (age >= 40) ageGroup = 'forties';
+    else if (age >= 30) ageGroup = 'thirties';
+
+    const nameList = koreanNames[gender][ageGroup];
+    window.currentMateName = nameList[Math.floor(Math.random() * nameList.length)];
+    const ootd = regionOOTD[window.selectedRegionKey] || regionOOTD.hongdae;
+    const avatarEmoji = gender === 'female' ? '👩🏻' : '👦🏻';
+
+    const mAvatar = document.getElementById('mate-avatar');
+    const mName = document.getElementById('mate-fullname');
+    const mSub = document.getElementById('mate-subinfo');
+    const mOotdTitle = document.getElementById('mate-ootd-title');
+    const mOotdDesc = document.getElementById('mate-ootd-desc');
+    const mDialog = document.getElementById('mate-dialogue');
+    const pMateName = document.getElementById('planner-mate-name');
+    const vModalText = document.getElementById('video-modal-text');
+
+    if (mAvatar) mAvatar.innerText = avatarEmoji;
+    if (mName) mName.innerText = `${age}세 ${window.currentMateName}`;
+    if (mSub) mSub.innerText = `동갑내기 메이트 · ${ootd.tagline}`;
+    if (mOotdTitle) mOotdTitle.innerText = `TODAY'S OOTD · ${ootd.title}`;
+    if (mOotdDesc) mOotdDesc.innerText = ootd.desc;
+    if (mDialog) mDialog.innerText = `"${nickname} 님과 함께할 ${age}세 ${window.currentMateName}님과 서울메이트가 되셨습니다! ${window.currentMateName}님과 일정을 함께 하시겠어요?"`;
+    if (pMateName) pMateName.innerText = `${avatarEmoji} ${age}세 ${window.currentMateName} 메이트와 동행 중`;
+
+    const reg = regionData[window.selectedRegionKey] || regionData.hongdae;
+    if (vModalText) vModalText.innerText = `"${age}세 ${window.currentMateName} 님과의 오늘 ${reg.title} 로컬 투어가 본격적으로 시작되었습니다!"`;
+  }
+
+  function openIntroVideo() {
+    const modal = document.getElementById('intro-video-modal');
+    if (modal) modal.style.display = 'flex';
+    const video = document.getElementById('hongdae-intro-video');
+    if (video) {
+      video.load();
+      video.currentTime = 0;
+      const playPromise = video.play();
+      if (playPromise !== undefined) playPromise.catch(() => {});
+    }
+  }
+
+  window.closeIntroVideo = function() {
+    const video = document.getElementById('hongdae-intro-video');
+    if (video) video.pause();
+    const modal = document.getElementById('intro-video-modal');
+    if (modal) modal.style.display = 'none';
+    window.currentStep = 9;
+    renderPlanner();
+    updateUI();
+  };
+
+  function updateUI() {
+    const progressPercent = Math.min((window.currentStep / window.totalSteps) * 100, 100);
+    const progressEl = document.getElementById('progress');
+    if (progressEl) progressEl.style.width = progressPercent + '%';
+
+    const topBackBtn = document.getElementById('top-back-btn');
+    if (topBackBtn) topBackBtn.style.display = window.currentStep > 1 ? 'block' : 'none';
+
+    const stepIndicator = document.getElementById('step-indicator');
+    const mainFooter = document.getElementById('main-footer');
+
+    if (window.currentStep <= 6) {
+      if (stepIndicator) stepIndicator.innerText = `STEP ${window.currentStep} / ${window.totalSteps}`;
+      if (mainFooter) mainFooter.style.display = 'flex';
+    } else if (window.currentStep === 7) {
+      if (stepIndicator) stepIndicator.innerText = 'READY';
+      if (mainFooter) mainFooter.style.display = 'flex';
+
+      const nickInput = document.getElementById('nickname')?.value.trim();
+      const nick = nickInput || '여행자';
+      const age = document.getElementById('user-age')?.value || '22';
+      const gen = document.getElementById('user-gender')?.value === 'male' ? '남성' : '여성';
+      const startTSelect = document.getElementById('start-time-picker');
+      const startT = startTSelect ? startTSelect.options[startTSelect.selectedIndex].text : '11:00 AM';
+      const dur = document.getElementById('duration-picker')?.value || '8';
+
+      const reg = regionData[window.selectedRegionKey] || regionData.hongdae;
+      const pProfile = document.getElementById('sum-profile');
+      const pLogistics = document.getElementById('sum-logistics');
+      const pRegion = document.getElementById('sum-region');
+      if (pProfile) pProfile.innerText = `${nick} (${age}세 ${gen}) / 로컬 패션, 카페투어`;
+      if (pLogistics) pLogistics.innerText = `출발 위치 예시 · ${startT} 시작 (${dur}시간 코스)`;
+      if (pRegion) pRegion.innerText = reg.title;
+    } else if (window.currentStep === 8) {
+      if (stepIndicator) stepIndicator.innerText = 'MATCHED';
+      if (mainFooter) mainFooter.style.display = 'flex';
+    } else if (window.currentStep === 9) {
+      if (stepIndicator) stepIndicator.innerText = 'ACTIVE TOUR';
+      if (mainFooter) mainFooter.style.display = 'none';
+    } else if (window.currentStep === 10) {
+      if (stepIndicator) stepIndicator.innerText = 'MY TRAVEL STORY';
+      if (mainFooter) mainFooter.style.display = 'none';
+      if (topBackBtn) topBackBtn.style.display = 'block';
+    }
+
+    document.querySelectorAll('.step-page').forEach((el, idx) => {
+      el.classList.toggle('active', idx + 1 === window.currentStep);
+    });
+
+    const prevBtn = document.getElementById('prev-btn');
+    if (prevBtn) prevBtn.style.display = (window.currentStep > 1 && window.currentStep < 8) ? 'block' : 'none';
+    
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+      if (window.currentStep === 6) nextBtn.innerText = '선택 완료 (결과 확인)';
+      else if (window.currentStep === 7) nextBtn.innerText = '나의 서울 메이트 만나러 가기';
+      else if (window.currentStep === 8) nextBtn.innerText = '일정 시작하기 (동행 수락) ❤️';
+      else nextBtn.innerText = '다음';
+    }
+  }
+
+  window.nextStep = function() {
+    if (window.currentStep < 7) {
+      window.currentStep++;
+      updateUI();
+    } else if (window.currentStep === 7) {
+      generateMate();
+      window.currentStep = 8;
+      updateUI();
+    } else if (window.currentStep === 8) {
+      openIntroVideo();
+    }
+  };
+
+  window.prevStep = function() {
+    if (window.currentStep === 10) {
+      window.currentStep = 9;
+      updateUI();
+    } else if (window.currentStep === 9) {
+      window.currentStep = 8;
+      updateUI();
+    } else if (window.currentStep > 1) {
+      window.currentStep--;
+      updateUI();
+    }
+  };
+
+  function analyzeTrip(points, spots) {
+    const rad = x => x * Math.PI / 180;
+    function meters(a,b) { const p=rad(b.lat-a.lat),q=rad(b.lng-a.lng); const h=Math.sin(p/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(q/2)**2; return 6371000*2*Math.atan2(Math.sqrt(h),Math.sqrt(Math.max(0,1-h))); }
+    function nearest(p) { let found=null,best=75; for(const s of spots){const d=meters(p,s);if(d<best){found=s.id;best=d}}return found; }
+    const clean=points.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&Number.isFinite(p.time)&&p.accuracy>=0&&p.accuracy<=50).sort((a,b)=>a.time-b.time);
+    let total=0,walking=0,segments=[],segment=[],previous=null; const dwell={};
+    for(const p of clean){
+      if(!previous){segment=[p];previous=p;continue}
+      const dt=(p.time-previous.time)/1000,d=meters(previous,p);
+      if(dt<=0)continue;
+      if(p.breakBefore||dt>90||d/dt>50){if(segment.length)segments.push(segment);segment=[p];previous=p;continue}
+      const a=nearest(previous),b=nearest(p);
+      if(a&&a===b)dwell[a]=(dwell[a]||0)+dt;
+      const drift=Math.max(8,(previous.accuracy+p.accuracy)*0.3);
+      if(d>=drift){total+=d;if(d/dt<=2.5)walking+=d}
+      segment.push(p);previous=p;
+    }
+    if(segment.length)segments.push(segment);
+    const stays=spots.filter(s=>(dwell[s.id]||0)>=60).map(s=>({...s,seconds:dwell[s.id]})).sort((a,b)=>b.seconds-a.seconds);
+    return {total,walking,steps:Math.round(walking/0.7),segments,stays,pointCount:clean.length};
+  }
+
+  const tripLog={points:[],watchId:null,breakNext:false,ended:null};
+  let storyMap=null,storyMode='actual';
+  let storyVotes={};try{storyVotes=JSON.parse(localStorage.getItem('seoulmate-story-votes')||'{}');if(!storyVotes||typeof storyVotes!=='object')storyVotes={}}catch(e){}
+  const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function gpsStatus(message){const el=document.getElementById('trip-gps-status');if(el)el.textContent=message;}
+  function stopTripGPS(){if(tripLog.watchId!==null){navigator.geolocation.clearWatch(tripLog.watchId);tripLog.watchId=null}tripLog.breakNext=true;const b=document.getElementById('trip-gps-toggle');if(b)b.textContent='GPS 기록 시작';}
+  
+  window.toggleTripGPS=function(){
+    if(tripLog.watchId!==null){stopTripGPS();gpsStatus('기록을 일시 정지했어요. 다시 시작할 수 있어요.');return}
+    if(!navigator.geolocation||!window.isSecureContext){gpsStatus('이 브라우저에서는 위치 기록을 사용할 수 없어요. HTTPS 또는 localhost에서 열어주세요.');return}
+    gpsStatus('위치 사용 권한과 GPS 신호를 확인하고 있어요.');
+    try{
+      tripLog.watchId=navigator.geolocation.watchPosition(position=>{
+        if(tripLog.watchId===null)return;
+        const c=position.coords;
+        if(c.accuracy>50){tripLog.breakNext=true;gpsStatus('GPS 오차가 커서 기다리고 있어요. 실외에서 다시 확인해주세요.');return}
+        if(tripLog.points.length>=20000){stopTripGPS();gpsStatus('이번 기록의 최대 길이에 도달해 기록을 종료했어요.');return}
+        tripLog.points.push({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,time:position.timestamp,breakBefore:tripLog.breakNext});tripLog.breakNext=false;
+        gpsStatus(`GPS 기록 중 · ${tripLog.points.length}개 위치 · 오차 약 ${Math.round(c.accuracy)}m`);
+      },error=>{tripLog.breakNext=true;if(error.code===1){stopTripGPS();gpsStatus('위치 권한이 꺼져 있어요. 브라우저 설정에서 허용한 뒤 다시 시작해주세요.')}else gpsStatus('GPS 신호를 기다리고 있어요. 기록하지 못한 구간은 결산에서 제외해요.')},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+      document.getElementById('trip-gps-toggle').textContent='GPS 기록 일시 정지';
+    }catch(e){stopTripGPS();gpsStatus('위치 기록을 시작하지 못했어요. 브라우저 권한을 확인해주세요.')}
+  };
+
+  function syncPlanCompletion(){
+    const active=window.currentDisplayedSpots||[];
+    window.completedCount=active.filter(p=>window.completedPlanIds.has(p.id)).length;
+    window.currentPercentage=active.length?Math.round(window.completedCount/active.length*100):0;
+    active.forEach((p,i)=>{
+      document.getElementById(`item-${i+1}`)?.classList.toggle('done',window.completedPlanIds.has(p.id));
+      document.getElementById(`walk-${i+1}`)?.classList.toggle('active',window.completedPlanIds.has(p.id));
+    });
+    const bar=document.getElementById('rate-bar'),txt=document.getElementById('rate-text');
+    if(bar)bar.style.width=window.currentPercentage+'%';
+    if(txt)txt.textContent=`달성률 ${window.currentPercentage}%`;
+  }
+
+  function demoTrip(spots){
+    const seconds=[48,23,37,65,32];let time=Date.now()-4*3600000;const points=[];
+    spots.forEach((s,i)=>{
+      if(i){const prev=spots[i-1];for(let j=1;j<=24;j++){time+=30000;points.push({lat:prev.lat+(s.lat-prev.lat)*j/24,lng:prev.lng+(s.lng-prev.lng)*j/24,accuracy:5,time})}}
+      for(let m=0;m<seconds[i%seconds.length]*2;m++){time+=30000;points.push({lat:s.lat,lng:s.lng,accuracy:5,time})}
+    });
+    return points;
+  }
+
+  function stayText(seconds){const m=Math.floor(seconds/60);return m>=60?`${Math.floor(m/60)}시간 ${m%60}분`:`${m}분`;}
+  function thumbIcon(down){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" ${down?'style="transform:rotate(180deg)"':''}><path d="M7 10h-4v11h4M7 20h10a2 2 0 002-1.6l1.6-7A2 2 0 0018.7 9H14l.6-4c.3-2-2.3-3-3.2-1L7 11z" stroke-linejoin="round"/></svg>`;}
+
+  function renderStoryMap(stats,spots){
+    const root=document.getElementById('story-map');if(!root)return;
+    if(!window.L){root.innerHTML='<div class="story-map-fallback">지도를 불러오지 못했어요.<br>인터넷 연결 후 아래 ‘지도 다시 보기’를 눌러주세요.</div>';return}
+    storyMap=L.map(root,{scrollWheelZoom:false}).setView([37.5665,126.9780],11);
+    const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(storyMap);
+    stats.segments.filter(s=>s.length>1).forEach(s=>L.polyline(s.map(p=>[p.lat,p.lng]),{color:'#FF5A5F',weight:4,opacity:.9,dashArray:storyMode==='demo'?'7 5':undefined}).addTo(storyMap));
+    const routePoints=stats.segments.flat();
+    spots.forEach((s,i)=>L.marker([s.lat,s.lng],{icon:L.divIcon({className:'story-pin',html:String(i+1),iconSize:[27,27],iconAnchor:[13,13]})}).addTo(storyMap).bindPopup(escapeHTML(s.title)));
+    if(routePoints.length){
+      L.circleMarker([routePoints[0].lat,routePoints[0].lng],{radius:6,color:'#10B981',fillOpacity:1}).addTo(storyMap).bindPopup('기록 시작');
+      const p=routePoints.at(-1);
+      L.circleMarker([p.lat,p.lng],{radius:6,color:'#FF5A5F',fillOpacity:1}).addTo(storyMap).bindPopup('기록 종료');
+    }
+    window.storyBounds=routePoints.length?routePoints.map(p=>[p.lat,p.lng]):spots.map(p=>[p.lat,p.lng]);
+    if(window.storyBounds.length)storyMap.fitBounds(window.storyBounds,{padding:[24,24],maxZoom:15});
+    requestAnimationFrame(()=>storyMap.invalidateSize());
+  }
+
+  window.storyMapView=function(all){if(!storyMap)return;if(all)storyMap.setView([37.5665,126.9780],11);else if(window.storyBounds.length)storyMap.fitBounds(window.storyBounds,{padding:[24,24],maxZoom:15})};
+  window.setStoryMode=function(mode){storyMode=mode==='demo'?'demo':'actual';renderTravelStory()};
+  window.voteStoryPlace=function(id,value){
+    if(!window.currentDisplayedSpots.some(s=>s.id===id&&window.completedPlanIds.has(s.id)))return;
+    storyVotes[id]=storyVotes[id]===value?null:value;
+    let saved=true;try{localStorage.setItem('seoulmate-story-votes',JSON.stringify(storyVotes))}catch(e){saved=false}
+    const card=document.getElementById('story-place-'+id);if(!card)return;
+    card.querySelectorAll('[data-vote]').forEach(b=>b.setAttribute('aria-pressed',String(storyVotes[id]===b.dataset.vote)));
+    const fb = card.querySelector('.vote-feedback');
+    if(fb) fb.textContent=storyVotes[id]?(saved?'의견을 반영했어요.':'의견 반영 완료!'):'선택을 취소했어요.';
+  };
+
+  function getDynamicBadge(regionTitle, percentage) {
+    const mainRegion = regionTitle ? regionTitle.split('·')[0].trim() : '서울';
+    if (percentage < 30) {
+      return { emoji: "☕", title: `${mainRegion}을 즐기지 못했네요 분발하세요!`, sub: `아직 ${mainRegion}의 진정한 매력을 맛보지 못했어요. 다음엔 꼭 완주해봐요!` };
+    } else if (percentage < 60) {
+      return { emoji: "🧭", title: `${mainRegion} 로컬 도전에 거의 다 왔어요!`, sub: `알찬 발걸음이었어요! 조금만 더 둘러보시면 완전한 로컬 마스터가 됩니다.` };
+    } else if (percentage < 80) {
+      return { emoji: "🎖️", title: `${mainRegion}의 찐 로컬 매력을 제대로 맛보셨군요!`, sub: `대단해요! 현지인만 아는 핫플레이스를 핵심적으로 정복하셨습니다!` };
+    } else {
+      return { emoji: "👑", title: `${mainRegion} 마스터! 진정한 서울 로컬 메이트 인정 🏆`, sub: `완벽합니다! 준비된 모든 로컬 코스를 100% 정복하셨습니다!` };
+    }
+  }
+
+  function renderTravelStory(){
+    if(storyMap){storyMap.remove();storyMap=null}
+    const spots=window.currentDisplayedSpots,done=spots.filter(s=>window.completedPlanIds.has(s.id));
+    const stats=analyzeTrip(storyMode==='demo'?demoTrip(spots):tripLog.points,spots),has=stats.pointCount>=2;
+    const percent=spots.length?Math.round(done.length/spots.length*100):0;
+    const longest=stats.stays[0],shortest=stats.stays.length>1?stats.stays.at(-1):null;
+    const name=document.getElementById('nickname').value.trim()||'여행자',date=new Date(tripLog.ended||Date.now());
+    const reg=regionData[window.selectedRegionKey]||regionData.hongdae;
+    const dynamicBadge=getDynamicBadge(reg.title, percent);
+
+    const stayCard=(s,title,symbol)=>`<div class="story-stay"><div class="stay-symbol">${symbol}</div><div><span class="stay-label">${title}</span><h3>${s?escapeHTML(s.title):'비교할 기록이 부족해요'}</h3><p class="stay-duration">${s?stayText(s.seconds)+' 머물렀어요 · 추정':'장소 근처에서 1분 이상 기록이 필요해요'}</p></div></div>`;
+    
+    document.getElementById('step10').innerHTML=`
+      <section class="story-hero">
+        <div class="story-eyebrow">SEOUL MATE · TRAVEL JOURNAL</div>
+        <h1>오늘의 여행이야기</h1>
+        <p>${escapeHTML(name)}님, 오늘도 서울과 한 걸음 가까워졌어요.<br>함께한 하루를 천천히 돌아볼까요?</p>
+        <span class="story-date">${date.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'})} · ${escapeHTML(reg.title)}</span>
+      </section>
+
+      <div class="story-card" style="text-align:center; padding:18px; border:1.5px solid var(--seoul-blue);">
+        <div style="font-size:38px; margin-bottom:4px;">${dynamicBadge.emoji}</div>
+        <div style="font-size:17px; font-weight:800; color:var(--seoul-blue);">${dynamicBadge.title}</div>
+        <div style="font-size:12px; color:var(--text-sub); margin-top:4px;">${dynamicBadge.sub}</div>
+      </div>
+
+      <div class="story-card story-completion">
+        <div class="story-ring" style="--percent:${percent}%"><span>${percent}%</span></div>
+        <div>
+          <h2>메이트와 함께한 오늘</h2>
+          <p class="story-small">${spots.length}개 코스 중 <strong>${done.length}개 완료</strong><br>체크한 경험들이 오늘의 이야기가 됐어요.</p>
+        </div>
+      </div>
+
+      <span class="story-badge ${storyMode==='demo'?'demo':''}">${storyMode==='demo'?'시연 데이터 · 실제 GPS 기록 아님':has?'GPS 기록 기반 · 측정 추정치':'GPS 기록 없음'}</span>
+      
+      <div class="story-metrics">
+        <div class="story-metric"><span>오늘의 발걸음</span><strong>${has?stats.steps.toLocaleString():'—'}<small>걸음</small></strong><small>도보 추정 거리 ÷ 보폭 0.7m</small></div>
+        <div class="story-metric"><span>총 이동 거리</span><strong>${has?(stats.total/1000).toFixed(2):'—'}<small>km</small></strong><small>기록된 위치 사이 거리 합계</small></div>
+      </div>
+
+      <div class="story-card">
+        <h2>마음이 머문 순간</h2>
+        <p class="story-small">일정에 포함된 장소 주변의 GPS 기록을 비교했어요.</p>
+        ${stayCard(longest,'가장 오래 머문 곳','◷')}
+        ${stayCard(shortest,'가장 짧게 머문 곳','◴')}
+        <p class="story-small" style="margin-top:12px">GPS가 없는 구간은 제외해요. 실내 위치는 정확히 구분하기 어려워요.</p>
+      </div>
+
+      <div class="story-card">
+        <h2>서울에 남긴 나의 발자취</h2>
+        <p class="story-small">${storyMode==='demo'?'코스 지점을 연결한 시연 경로예요.':has?'기록된 이동 경로를 따라 하루를 돌아봐요.':'아직 이동 기록이 없어 완료한 장소만 표시해요.'}</p>
+        <div id="story-map" class="story-map" aria-label="서울 지도와 오늘의 이동 경로"></div>
+        <div class="map-caption">🟢 시작 · 🔴 종료 · 파란 숫자: 완료한 장소<br>기록이 끊긴 구간은 선으로 연결하지 않아요.</div>
+        <div class="map-actions">
+          <button onclick="storyMapView(true)">서울 전체</button>
+          <button onclick="storyMapView(false)">내 경로 보기</button>
+          <button onclick="renderTravelStory()">지도 다시 보기</button>
+        </div>
+      </div>
+
+      <button class="story-outline story-demo-control" onclick="setStoryMode('${storyMode==='demo'?'actual':'demo'}')">
+        ${storyMode==='demo'?'실제 기록으로 돌아가기':'시연 데이터로 결산 미리보기'}
+      </button>
+
+      <div class="story-card" style="text-align:left;">
+        <h2 style="font-size:14px; margin-bottom:4px;">💬 다음 서울 여행자를 위한 방명록 남기기</h2>
+        <p class="story-small" style="margin-bottom:8px;">오늘 방문한 로컬 스팟의 분위기나 꿀팁을 공유해주세요!</p>
+        <textarea id="user-review-input" rows="2" placeholder="예: 연남동 골목 끝자락 티하우스 뷰가 대박이에요!" style="width:100%; border:1px solid #CBD5E1; border-radius:8px; padding:8px; font-size:12px; outline:none; resize:none;"></textarea>
+        <button class="btn btn-primary" onclick="submitReviewAndShare('${dynamicBadge.title}')" style="width:100%; margin-top:8px; padding:10px; border-radius:8px; font-size:12px;">
+          🌐 방명록 등록 & 커뮤니티 공유하기
+        </button>
+        <button onclick="openCommunityFeedModal()" style="width:100%; margin-top:6px; padding:9px; background:#EFF6FF; color:#1A56DB; border:1px solid #D4E2FB; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+          👀 다른 여행자의 실시간 방명록 둘러보기
+        </button>
+      </div>
+
+      <div class="story-section-title"><h2>오늘 함께한 장소</h2><span>${done.length}곳 완료</span></div>
+      <p class="story-small" style="margin-bottom:12px">이 여행지를 다른 서울메이트들에게 추천하시겠어요?</p>
+      <div id="story-places"></div>
+
+      <button class="story-outline story-back" onclick="backToStoryPlans()">체크리스트 다시 보기</button>
+    `;
+
+    document.getElementById('story-places').innerHTML = done.length ? done.map((s) => `
+      <article class="story-place" id="story-place-${escapeHTML(s.id)}">
+        <div class="story-photo">
+          <img src="${s.photo || reg.img}" alt="비짓서울 공식 인증 명소 사진" loading="lazy">
+          <span class="photo-badge">비짓서울 공식 사진</span>
+        </div>
+        
+        <!-- 대표사진 바로 아래 위치한 미니멀 따봉/비추 액션 바 -->
+        <div class="photo-action-bar">
+          <span class="photo-action-label">이 코스 추천하시나요?</span>
+          <div class="vote-buttons">
+            <button aria-label="${escapeHTML(s.title)} 추천" data-vote="up" aria-pressed="${storyVotes[s.id]==='up'}" onclick="voteStoryPlace('${s.id}','up')">
+              ${thumbIcon(false)} 추천
+            </button>
+            <button class="down" aria-label="${escapeHTML(s.title)} 비추천" data-vote="down" aria-pressed="${storyVotes[s.id]==='down'}" onclick="voteStoryPlace('${s.id}','down')">
+              ${thumbIcon(true)} 아쉬움
+            </button>
+          </div>
+        </div>
+
+        <div class="story-place-content">
+          <span class="story-place-tag">✓ 방문 인증 완료 · ${escapeHTML(s.tag)}</span>
+          <h3>${escapeHTML(s.title)}</h3>
+          <p class="story-small">${escapeHTML(s.desc)}</p>
+          <div class="vote-feedback" role="status">${storyVotes[s.id] ? '의견이 반영되었습니다.' : ''}</div>
+        </div>
+      </article>
+    `).join('') : '<div class="story-empty">아직 체크한 장소가 없어요.<br>체크리스트에서 완료한 경험을 선택해주세요.</div>';
+
+    renderStoryMap(stats, done);
+  }
+
+  window.finishTour = function() {
+    window.closeFinishModal();
+    stopTripGPS();
+    tripLog.ended = Date.now();
+    window.pendingCrowdTargetIndex = null;
+    const crowdModal = document.getElementById('crowd-single-modal');
+    if (crowdModal) crowdModal.style.display = 'none';
+    window.currentStep = 10;
+    updateUI();
+    renderTravelStory();
+    document.querySelector('.content').scrollTop = 0;
+  };
+
+  window.backToStoryPlans = function() {
+    window.currentStep = 9;
+    updateUI();
+    document.querySelector('.content').scrollTop = 0;
+  };
+
+  window.submitReviewAndShare = function(badgeTitle) {
+    const reviewInput = document.getElementById('user-review-input');
+    const reviewText = reviewInput ? reviewInput.value.trim() : '';
+
+    if (!reviewText) {
+      alert("다음 여행자들을 위한 짧은 한 줄 리뷰를 입력해주세요!");
+      return;
+    }
+
+    const nickInput = document.getElementById('nickname')?.value.trim();
+    const nick = nickInput || '여행자';
+
+    window.globalReviewsDB.unshift({
+      name: `${nick} (나의 리뷰)`,
+      badge: badgeTitle || "서울 로컬 탐험가",
+      text: reviewText,
+      date: "방금 전"
+    });
+
+    alert("🎉 성공적으로 리뷰가 등록되었습니다!\n다른 여행자들과 로컬 방명록이 공유됩니다.");
+    reviewInput.value = '';
+    window.openCommunityFeedModal();
+  };
+
+  window.openCommunityFeedModal = function() {
+    const feedModal = document.getElementById('community-feed-modal');
+    const feedList = document.getElementById('community-feed-list');
+    if (!feedModal || !feedList) return;
+    
+    let html = '';
+    window.globalReviewsDB.forEach(item => {
+      html += `
+        <div style="background:#FFF; border:1px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:10px; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-weight:800; font-size:12px; color:#1E293B;">${item.name}</span>
+            <span style="font-size:10px; color:#94A3B8;">${item.date}</span>
+          </div>
+          <div style="font-size:10px; font-weight:800; color:#1A56DB; margin-bottom:6px;">🏷️ ${item.badge}</div>
+          <div style="font-size:12px; color:#334155; line-height:1.4;">"${item.text}"</div>
+        </div>
+      `;
+    });
+
+    feedList.innerHTML = html;
+    feedModal.style.display = 'flex';
+  };
+
+  window.closeCommunityFeedModal = function() {
+    const feedModal = document.getElementById('community-feed-modal');
+    if (feedModal) feedModal.style.display = 'none';
+  };
+
+  const VisitedCore = (() => {
+    const rows = [
+      ['myeongdong','명동 쇼핑거리','중구','Myeongdong|明洞|메ียง드ง|명동'],
+      ['gyeongbokgung','경복궁 · 광화문','종로구','Gyeongbokgung|Gyeongbokgung Palace|景福宮|景福宫|경복궁|광화문|Gwanghwamun|พระราชวังคยองบกกุง'],
+      ['nseoul','N서울타워 (남산)','용산구','N Seoul Tower|Namsan Tower|南山塔|Nソウルタワー|남산타워|엔서울타워'],
+      ['bukchon','북촌한옥마을','종로구','Bukchon Hanok Village|北村韓屋村|北村韩屋村|北村韓屋マウル'],
+      ['hongdae-street','홍대 걷고싶은거리','마포구','Hongdae walking street|홍대 걷고 싶은 거리|弘大步行街'],
+      ['ddp','동대문 DDP','중구','DDP|Dongdaemun Design Plaza|東大門デザインプラザ|东大门设计广场|동대문디자인플라자'],
+      ['lotte','롯데월드타워','송파구','Lotte World Tower|ロッテワールドタワー|乐天世界塔|樂天世界塔'],
+      ['ssamzigil','인사동 쌈지길','종로구','Ssamzigil|Ssamziegil|サムジキル|쌈지길'],
+      ['yeouido','여의도 한강공원','영등포구','Yeouido Hangang Park|汝矣島漢江公園|汝矣岛汉江公园'],
+      ['gwangjang','광장시장','종로구','Gwangjang Market|広蔵市場|廣藏市場|广藏市场'],
+      ['seoulforest','서울숲','성동구','Seoul Forest|ソウルの森|首尔林|首爾林'],
+      ['nationalmuseum','국립중앙박물관','용산구','National Museum of Korea|国立中央博物館|國立中央博物館'],
+      ['coexlibrary','별마당 도서관','강남구','Starfield Library|COEX Library|星空图书馆|ピョルマダン図書館'],
+      ['deoksugung','덕수궁','중구','Deoksugung|徳寿宮|德寿宫|德壽宮'],
+      ['changdeokgung','창덕궁','종로구','Changdeokgung|昌徳宮|昌德宫|昌德宮']
+    ];
+    const catalog = rows.map(([id,name,area,aliases])=>({id,name,area,aliases:aliases.split('|')}));
+    const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{S}]/gu,'');
+    function resolveDemo(text) {
+      return text.split(/[,，、;；\n]+/).map(s=>s.trim()).filter(Boolean).map(input=>({input,ids:catalog.filter(p=>[p.name,...p.aliases].some(a=>normalize(a)===normalize(input))).map(p=>p.id)}));
+    }
+    function validateResults(results) {
+      if (!Array.isArray(results) || results.length>12) throw new Error('Invalid results');
+      return results.map(r=>{
+        if(typeof r.input!=='string'||r.input.length>600||!Array.isArray(r.ids)||r.ids.length>3||r.ids.some(id=>!catalog.some(p=>p.id===id))) throw new Error('Invalid place');
+        return {input:r.input,ids:[...new Set(r.ids)]};
+      });
+    }
+    return {catalog,normalize,resolveDemo,validateResults};
+  })();
+
+  (() => {
+    const {catalog,resolveDemo,validateResults}=VisitedCore;
+    const visits=new Map();
+    let mode='demo', requestVersion=0;
+    const input=document.getElementById('visited-other');
+    const status=document.getElementById('visited-status');
+    const results=document.getElementById('visited-results');
+    const presets=[...document.querySelectorAll('#step2 .grid-2 .chip')];
+    function button(text,action){const b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',action);return b;}
+    function sync(){
+      window.visitedPlaces=[...visits.values()].map(p=>({...p}));
+      const list=document.getElementById('visited-selected');
+      if(list) {
+        list.replaceChildren();
+        visits.forEach(p=>list.append(button(p.name+' ×',()=>{visits.delete(p.id);sync();})));
+      }
+      const countEl = document.getElementById('visited-count');
+      if(countEl) countEl.textContent=visits.size+'곳';
+      presets.forEach((el,i)=>{
+        const active=visits.has(catalog[i].id);
+        el.classList.toggle('active',active);
+        el.setAttribute('aria-pressed',String(active));
+      });
+      const sumVisited = document.getElementById('sum-visited');
+      if(sumVisited) sumVisited.textContent=visits.size? [...visits.values()].map(p=>p.name).join(' · '):'선택한 장소 없음';
+    }
+    presets.forEach((el,i)=>{
+      const p=catalog[i];
+      if(el.classList.contains('active'))visits.set(p.id,{id:p.id,name:p.name,area:p.area,input:p.name,source:'preset'});
+      el.removeAttribute('onclick');el.setAttribute('role','button');el.tabIndex=0;
+      const toggle=()=>{if(visits.has(p.id))visits.delete(p.id);else visits.set(p.id,{id:p.id,name:p.name,area:p.area,input:p.name,source:'preset'});sync();};
+      el.addEventListener('click',toggle);
+      el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+    });
+    if(input) {
+      input.addEventListener('input',()=>{requestVersion++;results.replaceChildren();status.textContent='장소 확인을 누른 뒤, 맞는 장소를 선택해주세요.';});
+      document.querySelectorAll('[data-place-example]').forEach(el=>el.addEventListener('click',()=>{input.value=el.dataset.placeExample;input.dispatchEvent(new Event('input'));input.focus();}));
+    }
+    const resolveBtn = document.getElementById('visited-resolve');
+    if(resolveBtn) {
+      resolveBtn.addEventListener('click',async()=>{
+        const text=input.value.trim();
+        if(!text){status.textContent='가보신 장소를 먼저 입력해주세요.';input.focus();return;}
+        if(text.length>600||text.split(/[,，、;；\n]+/).filter(s=>s.trim()).length>12){status.textContent='한 번에 최대 12곳, 600자까지 입력해주세요.';return;}
+        const version=++requestVersion;
+        resolveBtn.disabled=true;results.replaceChildren();status.textContent=mode==='llm'?'AI가 장소를 확인하고 있어요…':'시연용 장소 목록에서 찾고 있어요…';
+        try{
+          let matches;
+          if(mode==='llm'){
+            const response=await fetch('/api/places/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:AbortSignal.timeout(25000)});
+            if(!response.ok)throw new Error('request');
+            const data=await response.json();matches=validateResults(data.results);
+          }else matches=resolveDemo(text);
+          if(version!==requestVersion)return;
+          matches.forEach(r=>{
+            const card=document.createElement('div');card.className='visited-result';
+            const original=document.createElement('small');original.textContent=r.input;card.append(original);
+            if(!r.ids.length){const note=document.createElement('p');note.textContent='장소를 특정하지 못했어요. 정확한 장소명과 지점명을 입력해주세요.';card.append(note);}
+            r.ids.forEach(id=>{
+              const p=catalog.find(p=>p.id===id);const name=document.createElement('strong');name.textContent=p.name;card.append(name);
+              const area=document.createElement('p');area.textContent=p.area+' · 이 장소가 맞나요?';card.append(area);
+              const add=button(visits.has(id)?'이미 추가한 장소':'맞아요, 방문 목록에 추가',()=>{
+                const duplicate=visits.has(id);
+                if(!duplicate)visits.set(id,{id,name:p.name,area:p.area,input:r.input,source:mode});
+                sync();add.textContent='추가 완료 ✓';add.disabled=true;
+                status.textContent=duplicate?'이미 방문 목록에 있는 장소예요.':p.name+'을(를) 방문 목록에 추가했어요.';
+              });add.disabled=visits.has(id);card.append(add);
+            });results.append(card);
+          });
+          status.textContent=matches.some(r=>r.ids.length)?'찾은 장소를 확인하고 추가해주세요.':'정확한 장소명으로 다시 입력해주세요.';
+        }catch{if(version===requestVersion)status.textContent='장소 확인에 실패했어요. 잠시 후 다시 시도하거나 위의 명소를 선택해주세요.';}
+        finally{resolveBtn.disabled=false;}
+      });
+    }
+    sync();
+  })();
+
+(() => {
+  // For a separate backend, set this to its HTTPS endpoint; never put a key here.
+  const endpoint=window.SEOULMATE_WEATHER_ENDPOINT||'/api/weather';
+  const $=id=>document.getElementById('weather-'+id);
+  let generation=0,controller,timer,lastRegion=null,lastData=null,lastCheck=0;
+  const names={hongdae:'홍대 · 연남',yeonhui:'연희 · 연남',suyu:'수유 · 우이천',jongno_hyehwa:'혜화 · 종로',gangnam:'강남 · 압구정',seongsu:'성수 · 서울숲',seochon:'서촌 · 부암',euljiro:'을지로 · 신당',jamsil:'잠실 · 송리단길'};
+  const sample={dry:{temperature:24.3,humidity:58,wind:2.1,rain:0,precipitation:0},rain:{temperature:20.8,humidity:86,wind:3.6,rain:2.5,precipitation:1},snow:{temperature:-1.2,humidity:74,wind:2.8,rain:0.4,precipitation:3}};
+  function demo(){const region=window.selectedRegionKey||'hongdae';return {...sample[$('scenario').value],mode:'demo',region,location:names[region]||'서울'};}
+  function render(data){
+    lastData=data;
+    const isDemo=data.mode==='demo';
+    const types={0:['강수 없음','◌'],1:['비','☂'],2:['비 / 눈','❄'],3:['눈','❄'],4:['소나기','☂'],5:['빗방울','☂'],6:['빗방울 / 눈날림','❄'],7:['눈날림','❄']};
+    const [condition,icon]=types[data.precipitation]||['강수 정보 없음','—'];
+    $('region').textContent=data.location;
+    $('temperature').textContent=Number.isFinite(data.temperature)?String(data.temperature):'—';
+    $('condition').textContent=condition;$('icon').textContent=icon;
+    $('humidity').textContent=data.humidity==null?'—':data.humidity+'%';
+    $('wind').textContent=data.wind==null?'—':data.wind+' m/s';
+    $('rain').textContent=data.rain==null?'—':data.rain+' mm';
+    const stale=!isDemo&&Date.now()-Date.parse(data.observedAt)>2*3600000;
+    $('badge').textContent=isDemo?'예시 날씨':stale?'이전 관측':'기상청 관측';
+    $('badge').classList.toggle('sample',isDemo||stale);
+    $('card').classList.toggle('rainy',data.precipitation>0);
+    $('demo').hidden=!isDemo;
+    $('time').textContent=isDemo?'시연용 예시 · 실제 관측 정보가 아닙니다':new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(data.observedAt))+' 관측 · 한국 시간';
+    $('source').textContent=isDemo?'연결 예정: 기상청 초단기실황':'출처: 기상청 초단기실황 · 선택 지역 대표 격자';
+    $('advice').textContent=data.precipitation>0?(data.precipitation===3||data.precipitation===7?'눈이 내리고 있어요. 이동할 때 미끄러운 길을 조심해요.':'우산을 챙겨요. 야외 일정 사이에 실내에서 쉬어가도 좋아요.'):data.temperature>=30?'더운 날씨예요. 물을 챙기고 그늘에서 쉬어가요.':data.temperature<5?'쌀쌀한 날씨예요. 따뜻한 겉옷을 챙겨요.':'다음 장소로 출발하기 전, 날씨를 한 번 확인해요.';
+    $('status').textContent=isDemo?'API 연결 전에는 예시 날씨로 화면을 확인할 수 있어요.':stale?'최신 관측이 늦어지고 있어요. 관측 시각을 확인해주세요.':'이 화면에서 10분마다 확인해요. 관측값은 발표 주기에 따라 갱신돼요.';
+  }
+  async function load(){
+    controller?.abort();controller=new AbortController();const seq=++generation;
+    const region=window.selectedRegionKey||'hongdae';lastRegion=region;lastCheck=Date.now();
+    if(lastData?.region!==region){lastData=null;$('temperature').textContent='—';$('condition').textContent='날씨 확인 중';$('humidity').textContent='—';$('wind').textContent='—';$('rain').textContent='—';$('time').textContent='';$('badge').textContent='확인 중';$('region').textContent=names[region]||'서울';}
+    $('refresh').disabled=true;$('status').textContent='날씨 정보를 확인하고 있어요…';
+    const timeout=setTimeout(()=>controller?.abort(),18000);
+    try{
+      if(location.protocol==='file:'&&!window.SEOULMATE_WEATHER_ENDPOINT){render(demo());return;}
+      const response=await fetch(endpoint+'?region='+encodeURIComponent(region),{signal:controller.signal});
+      if(seq!==generation)return;
+      // Static hosting has no API route. A failed live API must never become sample weather.
+      if(response.status===404){render(demo());return;}
+      if(!response.ok)throw new Error('API');
+      if(!(response.headers.get('content-type')||'').includes('application/json')){render(demo());return;}
+      const data=await response.json();if(seq!==generation)return;
+      if(data.mode==='demo'){render(demo());return;}
+      if(data.mode!=='live'||data.region!==region||!Number.isFinite(data.temperature)||!Number.isFinite(Date.parse(data.observedAt)))throw new Error('DATA');
+      render(data);
+    }catch{
+      if(seq!==generation)return;
+      if(lastData?.mode==='live'){$('badge').textContent='갱신 실패 · 이전 관측';$('badge').classList.add('sample');}
+      else{$('badge').textContent='연결 확인 필요';$('demo').hidden=true;}
+      $('status').textContent='날씨를 불러오지 못했어요. 새로고침으로 다시 시도해주세요.';
+    }finally{clearTimeout(timeout);if(seq===generation)$('refresh').disabled=false;}
+  }
+  function activate(){
+    const active=window.currentStep===9&&!document.hidden;
+    if(active){if(!timer)timer=setInterval(load,600000);if(!lastData||lastRegion!==window.selectedRegionKey||Date.now()-lastCheck>=600000)load();}
+    else{clearInterval(timer);timer=null;controller?.abort();generation++;$('refresh').disabled=false;}
+  }
+  $('refresh').addEventListener('click',load);
+  $('scenario').addEventListener('change',()=>render(demo()));
+  const prior=updateUI;updateUI=function(){prior();activate();};
+  document.addEventListener('visibilitychange',activate);
+  window.addEventListener('pagehide',()=>{clearInterval(timer);controller?.abort();generation++;});
+})();
+
+  updateUI();
+</script>
+<script async src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" onload="if(window.currentStep===10)renderTravelStory()"></script>
+</body>
+</html>
