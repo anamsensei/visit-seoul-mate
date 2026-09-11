@@ -36,7 +36,7 @@
       el.className='tag-cong cong-mid';
       const score=crowdScore(d?.crowd?.level);
       if(p&&score!==null&&fresh(d)) p.congestion=score;
-      el.textContent=d&&fresh(d)&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
+      el.textContent=d&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%${fresh(d)?'':' · 갱신 지연'}`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
       if(score!==null&&score>=70)el.className='tag-cong cong-high';
     });
   }

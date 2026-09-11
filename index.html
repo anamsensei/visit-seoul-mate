@@ -643,7 +643,7 @@
       <section class="city-card" aria-label="서울시 날씨 환경 및 혼잡도 정보">
         <div class="city-top"><h2>지금 이 지역은?</h2><span class="city-badge" id="city-badge">연결 대기</span></div>
         <p class="city-hint">서울시 지정 지역 단위 정보 · 가게별 혼잡도가 아닙니다.</p>
-        <div class="city-controls"><select id="city-area" aria-label="서울시 정보 조회 지역"><option>연남동</option><option>홍대 관광특구</option><option>광화문·덕수궁</option><option>서울숲공원</option><option>혜화역</option><option>압구정로데오거리</option><option>합정역</option><option>을지로</option><option>성수</option><option>잠실</option><option>서촌</option><option>수유</option></select><button id="city-refresh" type="button">새로고침</button></div>
+        <div class="city-controls"><select id="city-area" aria-label="서울시 정보 조회 지역"><option>동대문 관광특구</option><option>명동 관광특구</option><option>이태원 관광특구</option><option>잠실 관광특구</option><option>종로&#183;청계 관광특구</option><option>홍대 관광특구</option><option>경복궁</option><option>광화문&#183;덕수궁</option><option>보신각</option><option>서울 암사동 유적</option><option>창덕궁&#183;종묘</option><option>가산디지털단지역</option><option>강남역</option><option>건대입구역</option><option>고덕역</option><option>고속터미널역</option><option>교대역</option><option>구로디지털단지역</option><option>구로역</option><option>군자역</option><option>대림역</option><option>동대문역</option><option>뚝섬역</option><option>미아사거리역</option><option>발산역</option><option>사당역</option><option>삼각지역</option><option>서울대입구역</option><option>서울식물원&#183;마곡나루역</option><option>서울역</option><option>선릉역</option><option>성신여대입구역</option><option>수유역</option><option>신논현역&#183;논현역</option><option>신도림역</option><option>신림역</option><option>신촌&#183;이대역</option><option>양재역</option><option>역삼역</option><option>연신내역</option><option>오목교역&#183;목동운동장</option><option>왕십리역</option><option>용산역</option><option>이태원역</option><option>장지역</option><option>장한평역</option><option>천호역</option><option>충정로역</option><option>합정역</option><option>혜화역</option><option>홍대입구역(2호선)</option><option>회기역</option><option>가락시장</option><option>가로수길</option><option>김포공항</option><option>노량진</option><option>덕수궁길&#183;정동길</option><option>북촌한옥마을</option><option>서촌</option><option>성수카페거리</option><option>쌍문역</option><option>압구정로데오거리</option><option>여의도</option><option>연남동</option><option>영등포 타임스퀘어</option><option>용리단길</option><option>이태원 앤틱가구거리</option><option>인사동</option><option>창동 신경제 중심지</option><option>DMC(디지털미디어시티)</option><option>강서한강공원</option><option>고척돔</option><option>광나루한강공원</option><option>광화문광장</option><option>국립중앙박물관&#183;용산가족공원</option><option>난지한강공원</option><option>남산공원</option><option>노들섬</option><option>뚝섬한강공원</option><option>망원한강공원</option><option>반포한강공원</option><option>북서울꿈의숲</option><option>서울대공원</option><option>서울숲공원</option><option>아차산</option><option>양화한강공원</option><option>어린이대공원</option><option>여의도한강공원</option><option>월드컵공원</option><option>응봉산</option><option>이촌한강공원</option><option>잠실종합운동장</option><option>잠실한강공원</option><option>잠원한강공원</option><option>청계산</option><option>남대문시장</option><option>익선동</option><option>신정네거리역</option><option>잠실새내역</option><option>잠실역</option><option>송리단길&#183;호수단길</option><option>신촌 스타광장</option><option>보라매공원</option><option>서대문독립공원</option><option>안양천</option><option>여의서로</option><option>올림픽공원</option><option>홍제폭포</option><option>송현녹지광장</option><option>시의회 앞</option><option>숭례문</option></select><button id="city-refresh" type="button">새로고침</button></div>
         <p id="city-status" role="status" aria-live="polite">서울시 API 연결 대기 중</p>
         <button class="city-sample" id="city-sample" type="button">공개 샘플로 보기 · 광화문·덕수궁</button>
         <div id="city-content" hidden>
@@ -1817,7 +1817,7 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
       el.className='tag-cong cong-mid';
       const score=crowdScore(d?.crowd?.level);
       if(p&&score!==null&&fresh(d)) p.congestion=score;
-      el.textContent=d&&fresh(d)&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
+      el.textContent=d&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%${fresh(d)?'':' · 갱신 지연'}`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
       if(score!==null&&score>=70)el.className='tag-cong cong-high';
     });
   }
@@ -1865,5 +1865,7 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
 <script async src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" onload="if(window.currentStep===10)renderTravelStory()"></script>
 </body>
 </html>
+
+
 
 
