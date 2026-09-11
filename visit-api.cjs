@@ -102,9 +102,14 @@ function createVisitService(options = {}) {
   if (typeof fetchImpl !== 'function') throw new Error('FETCH_UNAVAILABLE');
 
   async function requestJson(url, init) {
-    const response = await fetchImpl(url, init);
+    const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(12000) });
     if (!response.ok) throw new Error(`VISITSEOUL_${response.status}`);
-    return response.json();
+    const json = await response.json();
+    if (json.result_code != null && Number(json.result_code) !== 200) {
+      const code = Number(json.result_code);
+      throw new Error(Number.isInteger(code) ? `VISITSEOUL_${code}` : 'VISITSEOUL_INVALID_RESPONSE');
+    }
+    return json;
   }
   async function list({ categoryCode, keyword = '', page = 1 } = {}) {
     if (!configured) throw new Error('VISITSEOUL_NOT_CONFIGURED');
@@ -113,6 +118,7 @@ function createVisitService(options = {}) {
     const body = { lang_code_id: 'ko', sort_type: 'latest', page_no: page };
     if (categoryCode) body.com_ctgry_sn = categoryCode; if (keyword) body.keyword = keyword;
     const json = await requestJson(base + LIST_PATH, { method: 'POST', headers: { Accept: 'application/json;charset=UTF-8', 'Content-Type': 'application/json;charset=UTF-8', 'VISITSEOUL-API-KEY': key }, body: JSON.stringify(body) });
+    if (!Array.isArray(json.data)) throw new Error('VISITSEOUL_INVALID_RESPONSE');
     const value = extractList(json).map(normalizeListItem).filter(Boolean); listCache.set(cacheKey, { at: Date.now(), value }); return value;
   }
   async function detail(id, fallback = {}) {
@@ -128,19 +134,35 @@ function createVisitService(options = {}) {
     const fetchCategories = [...new Set([...wanted, '음식'])];
     const visitedSet = new Set(visited.map(String)); const words = REGION_KEYWORDS[region] || [];
     const regionalKeyword = words[0] || '';
-    const lists = await Promise.all(fetchCategories.map(category => list({ categoryCode: CATEGORY_CODES[category], keyword: regionalKeyword })));
+    const failures = [];
+    const failedCategories = new Set();
+    let successfulLists = 0;
+    async function collectLists(keyword) {
+      const results = await Promise.allSettled(fetchCategories.map(category => list({ categoryCode: CATEGORY_CODES[category], keyword })));
+      return results.flatMap((result, i) => {
+        if (result.status === 'fulfilled') { successfulLists++; return [result.value]; }
+        failures.push(result.reason); failedCategories.add(fetchCategories[i]); return [];
+      });
+    }
+    const lists = await collectLists(regionalKeyword);
     const candidates = new Map(); lists.flat().forEach(item => { if (!visitedSet.has(item.id) && !candidates.has(item.id)) candidates.set(item.id, item); });
     // 지역 키워드 검색 결과가 적을 때만 같은 카테고리의 공식 목록으로 보충합니다.
     if (candidates.size < limit) {
-      const broad = await Promise.all(fetchCategories.map(category => list({ categoryCode: CATEGORY_CODES[category] })));
+      const broad = await collectLists('');
       broad.flat().forEach(item => { if (!visitedSet.has(item.id) && !candidates.has(item.id)) candidates.set(item.id, item); });
     }
+    if (!successfulLists && failures.length) throw failures[0];
     const scored = [...candidates.values()].map(item => {
       const hay = `${item.title} ${item.desc}`; const hits = words.filter(word => hay.includes(word)).length;
       return { item, score: hits * 5 + (wanted.includes(item.category) ? 2 : 0) };
     }).sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title, 'ko'));
     const detailSelected = scored.slice(0, Math.max(limit * 2, limit));
-    const detailed = await Promise.all(detailSelected.map(({ item }) => detail(item.id, item).catch(() => normalizeDetail(item, item)).catch(() => null)));
+    const detailResults = await Promise.allSettled(detailSelected.map(({ item }) => detail(item.id, item)));
+    const detailed = detailResults.flatMap(result => {
+      if (result.status === 'fulfilled') return [result.value];
+      failures.push(result.reason); return [];
+    });
+    if (detailSelected.length && !detailed.length && failures.length) throw failures.at(-1);
     const places = detailed.filter(p => p && Number.isFinite(p.lat) && Number.isFinite(p.lng)).map((p, index) => ({ ...p, relevance: scored[index]?.score || 0, travelTime: 8, transit: '다음 장소까지 이동', congestion: null }));
     const regional = places.filter(p => words.some(word => `${p.title} ${p.desc} ${p.address}`.includes(word)));
     const ranked = (regional.length >= Math.min(2, limit) ? regional : places);
@@ -149,7 +171,7 @@ function createVisitService(options = {}) {
     const mealPlaces = food.slice(0, 2);
     const selected = [...nonFood.slice(0, Math.max(0, limit - mealPlaces.length)), ...mealPlaces].slice(0, limit);
     const withMeals = arrangeMealStops(selected);
-    return { mode: 'live', source: 'visitseoul', region, categories: [...new Set([...wanted, '음식'])], places: withMeals, generatedAt: new Date().toISOString() };
+    return { mode: 'live', source: 'visitseoul', region, categories: [...new Set([...wanted, '음식'])], places: withMeals, partial: failures.length > 0, failedCategories: [...failedCategories], generatedAt: new Date().toISOString() };
   }
   return { configured, list, detail, recommend, categories: CATEGORY_CODES };
 }

@@ -779,7 +779,7 @@
 // GitHub Pages는 화면을 제공하고, API 요청은 Render 서버로 보냅니다.
 window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   ? 'https://visit-seoul-mate.onrender.com' : '';
-  window.visitDataMode = 'demo'; // 키 설정 후 visit-ui.js가 live로 전환
+  window.visitDataMode = 'loading'; // 공식 추천을 받기 전에는 샘플을 자동 표시하지 않음
   window.visitLiveSpots = [];
 
   window.currentStep = 1;
@@ -910,7 +910,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   function renderPlanner() {
     const startHour = parseInt(document.getElementById('start-time-picker')?.value || '11');
     const duration = parseInt(document.getElementById('duration-picker')?.value || '8');
-    const sourceSpots = window.visitDataMode === 'live' ? window.visitLiveSpots : (regionSpotPool[window.selectedRegionKey] || regionSpotPool.hongdae);
+    const sourceSpots = window.visitDataMode === 'live' ? window.visitLiveSpots : window.visitDataMode === 'demo' ? (regionSpotPool[window.selectedRegionKey] || regionSpotPool.hongdae) : [];
     const allSpots = (sourceSpots || []).filter(p => !(window.visitedPlaces || []).some(v => v.id === 'hongdae-street' && p.id === 'HD_2'));
     const spotCount = (duration === 4) ? 3 : (duration === 6 ? 4 : 5);
     window.activeTotalPlans = Math.min(spotCount, allSpots.length);
@@ -974,6 +974,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     });
 
     container.innerHTML = html;
+    if (!window.currentDisplayedSpots.length) container.textContent = window.visitDataMode === 'loading' ? '공식 추천을 불러오는 중입니다.' : '추천을 불러오지 못했어요. 위에서 다시 시도해주세요.';
     window.completedCount = 0;
     window.currentPercentage = 0;
     const rateBar = document.getElementById('rate-bar');
@@ -986,6 +987,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     if (pDesc) {
       pDesc.innerText = `${window.visitDataMode === 'live' ? '비짓서울 공식 콘텐츠와 좌표로 정리한 일정입니다.' : '시연용 일정입니다. 키를 연결하면 비짓서울 공식 콘텐츠로 바뀝니다.'} 점심은 13:00, 저녁은 18:00에 음식 장소를 각 1곳만 배정합니다. 카드를 누르면 상세 길안내가 제공됩니다.`;
     }
+    if (pDesc && !['live', 'demo'].includes(window.visitDataMode)) pDesc.textContent = '공식 추천이 준비되면 일정이 표시됩니다.';
   }
 
   window.togglePlan = function(planNum, currentIdx) {
