@@ -18,7 +18,11 @@ function createGeminiService(options={}) {
       if(!response.ok){
         const detail=(await response.text().catch(()=>'' )).slice(0,300).replace(/\s+/g,' ');
         lastError=new Error(`GEMINI_${response.status}`);console.warn(`[gemini] ${candidateModel} ${response.status} ${detail}`);
-        if(response.status===404)continue;throw lastError;
+        if([404,408,425,429,500,502,503,504].includes(response.status)){
+          await new Promise(resolve=>setTimeout(resolve,350));
+          continue;
+        }
+        throw lastError;
       }
       const data=await response.json();const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
       try{return JSON.parse(raw);}catch{throw new Error('GEMINI_INVALID_RESPONSE');}

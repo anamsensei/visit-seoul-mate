@@ -41,7 +41,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     }catch(error){return reply(error.message==='BODY_TOO_LARGE'?413:502,{error:error.message||'GEMINI_UNAVAILABLE'});}
   }
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});
-  if(url.pathname==='/health')return reply(200,{ok:true,build:'visited-custom-place-20260912-1',geminiConfigured:gemini.configured,geminiModel:gemini.model,commit:process.env.RENDER_GIT_COMMIT||null});
+  if(url.pathname==='/health')return reply(200,{ok:true,build:'gemini-failover-20260912-1',geminiConfigured:gemini.configured,geminiModel:gemini.model,commit:process.env.RENDER_GIT_COMMIT||null});
   if(url.pathname==='/api/ai/status')return reply(200,{configured:gemini.configured,provider:'gemini',model:gemini.model});
   if(url.pathname==='/api/ai/test'){
     if(!gemini.configured)return reply(503,{ok:false,error:'GEMINI_NOT_CONFIGURED'});
