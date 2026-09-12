@@ -31,7 +31,8 @@
     const seq = ++generation, activeController = controller;
     const region = window.selectedRegionKey || 'hongdae';
     const regions = Array.isArray(window.selectedRegions) && window.selectedRegions.length ? window.selectedRegions : [region];
-    const categories = [...document.querySelectorAll('[data-visit-category].active')].map(el => el.dataset.visitCategory);
+    const categories = [...new Set([...document.querySelectorAll('[data-visit-category].active')].map(el => el.dataset.visitCategory).concat(window.aiInterestProfile?.visitCategories||[]))];
+    const interests=(window.aiInterestProfile?.keywords||[]).map(String).filter(Boolean);
     const visited = (window.visitedPlaces || []).map(place => place.id).filter(Boolean);
     window.visitDataMode = 'loading'; window.visitLiveSpots = []; window.renderPlanner?.();
     setStatus('비짓서울 공식 관광 콘텐츠를 불러오고 있어요…');
@@ -42,7 +43,7 @@
       const duration=Number(document.getElementById('duration-picker')?.value)||8;
       const startHour=Number(document.getElementById('start-time-picker')?.value)||11;
       const limit=duration===4?3:duration===6?4:5;
-      const params = new URLSearchParams({ region, regions: regions.join(','), categories: categories.join(','), visited: visited.join(','), limit:String(limit),startHour:String(startHour),duration:String(duration) });
+      const params = new URLSearchParams({ region, regions: regions.join(','), categories: categories.join(','), interests:interests.join(','), visited: visited.join(','), limit:String(limit),startHour:String(startHour),duration:String(duration) });
       const response = await fetch(base() + '/api/visit/recommend?' + params, { signal: activeController.signal });
       if (response.status === 404) throw new Error('ROUTE_MISSING');
       const data = await response.json();

@@ -49,7 +49,7 @@ function resolve(text) {
   });
 }
 
-function createPlaceResolver(visitService) {
+function createPlaceResolver(visitService,geminiService) {
   let livePromise;
   async function liveCatalog() {
     if (!visitService?.configured) return catalog;
@@ -74,9 +74,31 @@ function createPlaceResolver(visitService) {
     return livePromise;
   }
   async function resolveLive(text) {
+    if(geminiService?.configured&&visitService?.configured){
+      try{
+        const normalized=await geminiService.normalizePlaces(text), places=new Map(), results=[];
+        for(const item of normalized){
+          const matched=new Map();
+          for(const koreanName of (item.koreanNames||[]).slice(0,3)){
+            for(const page of [1,2]){
+              let rows=[];try{rows=await visitService.list({keyword:String(koreanName).trim(),page});}catch{}
+              for(const p of rows){
+                const q=normalize(koreanName),title=normalize(p.title);
+                const matchScore=title===q?100:(title.includes(q)||q.includes(title)?90:score(koreanName,{keys:[title]}));
+                if(matchScore>=55&&!matched.has(p.id))matched.set(p.id,{...p,matchScore});
+              }
+            }
+          }
+          const ranked=[...matched.values()].sort((a,b)=>b.matchScore-a.matchScore).slice(0,3);
+          ranked.forEach(p=>places.set(String(p.id),{id:String(p.id),name:p.title,area:p.address||'서울'}));
+          results.push({input:String(item.input||''),ids:ranked.map(p=>String(p.id))});
+        }
+        if(results.some(r=>r.ids.length))return {results,places:[...places.values()],ai:true};
+      }catch{}
+    }
     const source = await liveCatalog();
     const inputs = String(text ?? '').split(/[,，、;；\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,12);
-    return {results:inputs.map(input=>({input,ids:source.map(p=>({p,score:score(input,p)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=72).slice(0,3).map(x=>x.p.id)})),places:source.map(({id,name,area})=>({id,name,area}))};
+    return {results:inputs.map(input=>({input,ids:source.map(p=>({p,score:score(input,p)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=72).slice(0,3).map(x=>x.p.id)})),places:source.map(({id,name,area})=>({id,name,area})),ai:false};
   }
   return {resolveLive};
 }

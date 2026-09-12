@@ -182,7 +182,7 @@ function createVisitService(options = {}) {
     }
     return { mode:'live', source:'visitseoul', total:places.size, places:[...places.values()], categories, districts, failures, generatedAt:new Date().toISOString() };
   }
-  async function recommend({ region = 'hongdae', regions = [], categories = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
+  async function recommend({ region = 'hongdae', regions = [], categories = [], interests = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
     if (!configured) return { mode: 'unconfigured', source: 'visitseoul', places: [] };
     const {selectItinerary,valid,restaurant,km,CENTERS}=require('./itinerary.cjs');
     const wanted=[...new Set(categories.filter(c=>CATEGORY_CODES[c]))];
@@ -190,6 +190,7 @@ function createVisitService(options = {}) {
     limit=Math.min(5,Math.max(1,Number(limit)||5));
     const selectedRegions=[...new Set((regions.length?regions:[region]).filter(Boolean))];
     const words=[...new Set(selectedRegions.flatMap(r=>DISTRICT_KEYWORDS[r]||REGION_KEYWORDS[r]||[r]).concat(REGION_KEYWORDS[region]||[]))];
+    const preferenceWords=[...new Set(interests.map(text).filter(Boolean))];
     const excluded=new Set(visited.map(String));
     const candidates=new Map(),usable=new Map(),attempted=new Set(),failedCategories=new Set();
     const diagnostics={listRequests:0,listFailures:0,detailRequests:0,detailFailures:0,invalidCoordinates:0,filteredVisited:0};
@@ -201,7 +202,7 @@ function createVisitService(options = {}) {
         for(const p of rows){if(excluded.has(p.id)){diagnostics.filteredVisited++;continue;}if(!candidates.has(p.id))candidates.set(p.id,p);}
       }catch(e){lastError=e;diagnostics.listFailures++;if(job.categoryCode)failedCategories.add(CATEGORY_BY_CODE[job.categoryCode]);}
     });}
-    const relevance=p=>words.filter(w=>[p.title,p.desc,p.address].join(' ').includes(w)).length*5+(wanted.includes(p.category)?2:0);
+    const relevance=p=>words.filter(w=>[p.title,p.desc,p.address].join(' ').includes(w)).length*5+preferenceWords.filter(w=>[p.title,p.desc,p.categoryPath].join(' ').includes(w)).length*3+(wanted.includes(p.category)?2:0);
     async function hydrate(){
       // Interleave categories so restaurants cannot consume the entire detail budget.
       const groups=new Map();
@@ -236,7 +237,7 @@ function createVisitService(options = {}) {
     }
     if(!successfulLists&&lastError)throw lastError;
     if(candidates.size&&!usable.size&&lastError)throw lastError;
-    return {mode:'live',source:'visitseoul',region,regions:selectedRegions,categories:wanted,places:result.places,
+    return {mode:'live',source:'visitseoul',region,regions:selectedRegions,categories:wanted,interests:preferenceWords,places:result.places,
       complete:result.complete,requestedCount:limit,partial:diagnostics.listFailures+diagnostics.detailFailures>0,
       failedCategories:[...failedCategories],expandedArea:result.expandedArea,
       schedule:{startHour,duration,missingMeals:result.missingMeals,travelMethod:'좌표 거리 기반 도보 추정',hoursVerified:false},

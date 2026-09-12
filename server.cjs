@@ -9,8 +9,11 @@ const {createVisitService}=require('./visit-api.cjs');
 const visit=createVisitService();
 const {createLocalDataService}=require('./local-data.cjs');
 const local=createLocalDataService({visitService:visit});
+const {createGeminiService}=require('./gemini-api.cjs');
+const gemini=createGeminiService();
 const {createPlaceResolver}=require('./place-resolver.cjs');
-const placeResolver=createPlaceResolver(visit);
+const placeResolver=createPlaceResolver(visit,gemini);
+async function readJson(req){let body='';for await(const chunk of req){body+=chunk;if(body.length>20000)throw new Error('BODY_TOO_LARGE');}return JSON.parse(body||'{}');}
 function createServer(){return http.createServer(async(req,res)=>{
   const origin=req.headers.origin;
   const allowedOrigins=new Set(['https://anamsensei.github.io',...(process.env.ALLOWED_ORIGIN||'').split(',').map(s=>s.trim()).filter(Boolean)]);
@@ -21,16 +24,25 @@ function createServer(){return http.createServer(async(req,res)=>{
   }
   let url;try{url=new URL(req.url,'http://localhost');}catch{return reply(400,{error:'INVALID_REQUEST'});}
   if(req.method==='POST'&&url.pathname==='/api/places/resolve'){
-    let body='';
-    for await (const chunk of req) { body+=chunk; if(body.length>20000) return reply(413,{error:'BODY_TOO_LARGE'}); }
     try {
-      const parsed=JSON.parse(body||'{}'); const text=String(parsed.text||'').trim();
+      const parsed=await readJson(req); const text=String(parsed.text||'').trim();
       if(!text||text.length>600)return reply(400,{error:'TEXT_REQUIRED'});
-      return reply(200,{mode:'multilingual-semantic',source:'visitseoul-catalog',...(await placeResolver.resolveLive(text))});
-    } catch { return reply(400,{error:'INVALID_JSON'}); }
+      return reply(200,{mode:'gemini-visitseoul',source:'visitseoul-catalog',...(await placeResolver.resolveLive(text))});
+    } catch(error) { return reply(error.message==='BODY_TOO_LARGE'?413:400,{error:error.message==='BODY_TOO_LARGE'?'BODY_TOO_LARGE':'INVALID_REQUEST'}); }
+  }
+  if(req.method==='POST'&&url.pathname==='/api/interests/analyze'){
+    if(!gemini.configured)return reply(503,{error:'GEMINI_NOT_CONFIGURED'});
+    try{
+      const body=await readJson(req);
+      const selected=Array.isArray(body.selected)?body.selected.map(String).slice(0,12):[];
+      const custom=String(body.custom||'').trim().slice(0,300),nationality=String(body.nationality||'').slice(0,80);
+      if(!selected.length&&!custom)return reply(400,{error:'INTEREST_REQUIRED'});
+      return reply(200,{mode:'live',source:'gemini',profile:await gemini.analyzeInterests({selected,custom,nationality})});
+    }catch(error){return reply(error.message==='BODY_TOO_LARGE'?413:502,{error:error.message||'GEMINI_UNAVAILABLE'});}
   }
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});
-  if(url.pathname==='/health')return reply(200,{ok:true,build:'place-resolver-20260912-1',commit:process.env.RENDER_GIT_COMMIT||null});
+  if(url.pathname==='/health')return reply(200,{ok:true,build:'gemini-step2-step4-20260912-1',geminiConfigured:gemini.configured,commit:process.env.RENDER_GIT_COMMIT||null});
+  if(url.pathname==='/api/ai/status')return reply(200,{configured:gemini.configured,provider:'gemini',model:gemini.model});
   if(url.pathname==='/api/city'){
     const area=url.searchParams.get('area');
     if(!AREAS.includes(area))return reply(400,{error:'INVALID_AREA'});
@@ -56,6 +68,7 @@ function createServer(){return http.createServer(async(req,res)=>{
   }
   if(url.pathname==='/api/visit/recommend'){
     const categories=(url.searchParams.get('categories')||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const interests=(url.searchParams.get('interests')||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,8);
     const visited=(url.searchParams.get('visited')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const regions=(url.searchParams.get('regions')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const region=url.searchParams.get('region')||'hongdae';
@@ -64,7 +77,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     if(!Number.isInteger(limit)||limit<1||limit>5||!Number.isFinite(startHour)||startHour<0||startHour>23||![4,6,8].includes(duration)||startHour+duration>24)return reply(400,{error:'INVALID_SCHEDULE'});
     // Local insights has its own endpoint. It previously delayed this response without
     // affecting place selection; do not fail an official itinerary on social lookup failure.
-    try{const result=await visit.recommend({region,regions,categories,visited,limit,startHour,duration}); return reply(200,result);}
+    try{const result=await visit.recommend({region,regions,categories,interests,visited,limit,startHour,duration}); return reply(200,result);}
     catch(error){return reply(error.message==='VISITSEOUL_NOT_CONFIGURED'?503:502,{mode:'error',source:'visitseoul',error:error.message,message:'비짓서울 API에서 추천 데이터를 가져오지 못했습니다.'});}
   }
   if(url.pathname.startsWith('/api/visit/place/')){
