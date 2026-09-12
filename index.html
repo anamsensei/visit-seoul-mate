@@ -481,7 +481,7 @@
         </div>
       </div>
 
-      <p id="interest-ai-status" style="margin-top:12px;color:#64748B;font-size:11px;line-height:1.6;">다음을 누르면 AI가 선택한 관심사를 일정 추천용 태그로 정리합니다.</p>
+      <p id="interest-ai-status" style="margin-top:12px;color:#64748B;font-size:11px;line-height:1.6;">선택한 관심사는 일정 추천에 바로 반영됩니다.</p>
     </div>
 
     <!-- STEP 5: 여행 조건 설정 -->
@@ -1248,31 +1248,19 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     }
   }
 
-  async function analyzeStep4Interests(){
+  function collectStep4Interests(){
     const selected=[...document.querySelectorAll('#step4 [data-ai-interest].active')].map(el=>el.dataset.aiInterest);
-    const custom=document.getElementById('custom-interest')?.value.trim()||'';
-    const status=document.getElementById('interest-ai-status');
-    const button=document.getElementById('next-btn');
-    if(status)status.textContent='AI가 다국어 관심사를 분석하고 있어요…';
-    if(button)button.disabled=true;
-    try{
-      const apiBase=(window.SEOULMATE_API_BASE||'').replace(/\/$/,'');
-      const nationality=document.getElementById('nationality')?.selectedOptions?.[0]?.textContent||'';
-      const response=await fetch(apiBase+'/api/interests/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({selected,custom,nationality}),signal:AbortSignal.timeout(25000)});
-      const data=await response.json();if(!response.ok||!data.profile)throw new Error(data.error||'AI_UNAVAILABLE');
-      window.aiInterestProfile=data.profile;
-      if(status)status.textContent=`AI 분석 완료 · ${data.profile.summary}`;
-      return true;
-    }catch{
-      window.aiInterestProfile={summary:selected.join(', ')||custom||'서울 로컬 탐방',keywords:selected,visitCategories:[],moodTags:[]};
-      if(status)status.textContent='AI 연결이 지연되어 선택한 관심사를 그대로 일정에 반영합니다.';
-      return false;
-    }finally{if(button)button.disabled=false;}
+    const categoryMap={
+      'K-뷰티 퍼스널컬러':['쇼핑','체험관광'],'K-POP 굿즈 엔터테인먼트':['쇼핑','문화관광'],
+      '한국 역사 고궁':['역사관광'],'K-드라마 촬영지':['문화관광'],
+      '로컬 패션 빈티지':['쇼핑'],'감성 카페 디저트':['음식']
+    };
+    window.aiInterestProfile={summary:selected.join(', ')||'서울 로컬 탐방',keywords:selected,visitCategories:[...new Set(selected.flatMap(value=>categoryMap[value]||[]))],moodTags:[]};
   }
 
   window.nextStep = async function() {
     if (window.currentStep < 7) {
-      if(window.currentStep===4)await analyzeStep4Interests();
+      if(window.currentStep===4)collectStep4Interests();
       window.currentStep++;
       updateUI();
     } else if (window.currentStep === 7) {
