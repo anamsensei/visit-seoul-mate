@@ -93,7 +93,7 @@ function createServer(){return http.createServer(async(req,res)=>{
   }
   if(url.pathname==='/api/places/status')return reply(200,{mode:'demo'});
   const staticFiles={
-    '/':'index.html','/index.html':'index.html','/visit-ui.js':'visit-ui.js','/city-ui.js':'city-ui.js','/weather-ui.js':'weather-ui.js',
+    '/':'index.html','/index.html':'index.html','/visit-ui.js':'visit-ui.js','/kakao-integration.js':'kakao-integration.js','/city-ui.js':'city-ui.js','/weather-ui.js':'weather-ui.js',
     '/city.css':'city.css','/weather.css':'weather.css'
   };
   if(staticFiles[url.pathname]){

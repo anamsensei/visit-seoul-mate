@@ -332,6 +332,8 @@
     .visited-result button{width:100%;padding:9px 8px;background:#1A56DB;color:white;border:0;border-radius:8px;margin-top:6px;font-size:11px;font-weight:700;cursor:pointer}
     .visited-selected-heading{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:14px}
     .visited-selected-heading span{color:#1A56DB}
+    .route-alt-actions{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+    .route-link-btn{flex:1;min-width:120px;border:1px solid #FACC15;background:#FFFBEA;color:#7C5D00;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:800;cursor:pointer;text-decoration:none;text-align:center}
   .weather-card{background:linear-gradient(145deg,#F1F7FF 0%,#FFF 76%);border:1px solid #CEDFFC;border-radius:19px;padding:17px;margin:0 0 17px;box-shadow:0 5px 18px #1A56DB08;color:#0D2137}.weather-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.weather-heading{font-size:13px;font-weight:800}.weather-badge{font-size:10px;font-weight:700;color:#047857;background:#E2F6EF;border-radius:20px;padding:5px 8px;white-space:nowrap}.weather-badge.sample{background:#FFF3D6;color:#916516}.weather-place{font-size:11px;color:#64748B;margin:8px 0 12px}.weather-main{display:flex;align-items:center;gap:14px}.weather-art{height:72px;width:72px;border-radius:22px;background:linear-gradient(135deg,#CCE1FF,#EAF4FF);display:grid;place-items:center;font-size:52px;color:#2261C8;flex-shrink:0;line-height:1}.weather-temperature{font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1.15}.weather-temperature small{font-size:19px;font-weight:500;letter-spacing:0;vertical-align:top;display:inline-block;margin-top:6px}.weather-condition{font-size:12px;color:#536580;margin-top:3px}.weather-refresh{margin-left:auto;align-self:flex-start;border:1px solid #D4E2F5;border-radius:10px;background:#FFF;color:#1A56DB;width:38px;height:38px;cursor:pointer;font-size:23px}.weather-refresh:disabled{opacity:.5}.weather-metrics{display:grid;grid-template-columns:repeat(3,1fr);padding:13px 0;margin-top:14px;border-top:1px solid #DFE9F6;border-bottom:1px solid #DFE9F6;text-align:center}.weather-metrics>div+div{border-left:1px solid #DFE9F6}.weather-metrics dt{font-size:10px;color:#64748B}.weather-metrics dd{font-size:13px;font-weight:800;margin-top:6px}.weather-advice{display:flex;align-items:flex-start;gap:8px;background:#E9F2FF;padding:10px 11px;border-radius:10px;margin-top:12px;font-size:11px;line-height:1.7;color:#27518A}.weather-meta{font-size:10px;color:#64748B;line-height:1.7;margin-top:10px;overflow-wrap:anywhere}.weather-status{font-size:10px;color:#64748B;line-height:1.6;margin-top:5px}.weather-demo{margin-top:10px;font-size:10px;color:#64748B}.weather-demo summary{cursor:pointer;padding:5px 0}.weather-demo select{margin-top:7px;padding:8px;font-size:11px}.weather-card.rainy .weather-art{background:linear-gradient(135deg,#DBE6F2,#EEF3FA);color:#5B749D}.weather-card button:focus-visible{outline:3px solid #90B5FA;outline-offset:2px}
 
 .city-card{border:1px solid #D4E2FB;background:white;border-radius:18px;padding:16px;margin:0 0 16px}.city-card h2{font-size:15px;color:#0D2137}.city-top{display:flex;justify-content:space-between;align-items:center;gap:7px}.city-badge{font-size:10px;background:#EBF2FE;color:#1A56DB;padding:5px 8px;border-radius:20px}.city-controls{display:flex;gap:7px;margin:12px 0 8px}.city-controls select{min-width:0;padding:10px;font-size:12px}.city-controls button,.city-sample{border:1px solid #D4E2FB;background:#F4F8FF;color:#1A56DB;border-radius:9px;padding:9px;font-size:11px;cursor:pointer}.city-card p{font-size:11px;line-height:1.7;color:#64748B;white-space:pre-line;overflow-wrap:anywhere}.city-card details{border-top:1px solid #E6EDF7;padding:12px 0 2px;margin-top:10px}.city-card summary{font-size:12px;font-weight:700;cursor:pointer;color:#1A56DB}.city-row{padding:9px 0;border-bottom:1px solid #EFF3F9}.city-row strong{font-size:12px;display:block}.city-row a{font-size:11px;color:#1A56DB;display:inline-block;padding:8px 0}.city-crowd{font-size:23px;color:#1A56DB;font-weight:800;margin:12px 0 5px}.city-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.city-grid>div{font-size:11px;background:#F0F6FF;border-radius:9px;padding:12px 8px;color:#224D86}.city-sample{margin-top:8px}.city-hint{font-size:10px!important;margin-top:8px}
@@ -528,30 +530,38 @@
       </div>
     </div>
 
-    <!-- STEP 6: 서울 25개 자치구 선택 -->
+    <!-- STEP 6: 서울 전체 지도에서 자치구 탐색 + Kakao Maps 장소 미리보기 -->
     <div class="step-page" id="step6">
-      <div class="step-title">서울 자치구 선택 & 미리보기</div>
-      <div class="step-desc">여러 자치구를 선택하면 선택한 생활권을 함께 반영해 일정을 구성합니다.</div>
+      <div class="step-title">서울 지도에서 여행지 탐색</div>
+      <div class="step-desc">서울 전체 지도를 보고 관심 있는 자치구를 눌러 지역 이야기와 관광명소·맛집·카페를 살펴보세요.</div>
 
-      <div class="map-container">
-        <svg class="seoul-vector" viewBox="0 0 360 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M40,100 Q80,30 180,25 Q280,30 325,90 Q345,170 280,225 Q180,240 70,205 Z" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3 3"/>
-          <path d="M30,140 C90,125 140,170 210,150 C270,130 310,150 345,145" stroke="#93C5FD" stroke-width="14" stroke-linecap="round"/>
-        </svg>
-
-        <div class="seoul-map-label">서울시 지도정보 플랫폼 연동 예정</div>
+      <div style="position:relative;background:#E2E8F0;border-radius:14px;overflow:hidden;border:1px solid #CBD5E1;margin-bottom:10px;">
+        <div id="district-kakao-map" style="width:100%;height:360px;"></div>
+        <div id="district-map-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);font-size:12px;font-weight:800;color:#1A56DB;z-index:5;text-align:center;padding:20px;">서울 전체 지도를 불러오는 중...</div>
+        <button type="button" id="district-reset-btn" onclick="showSeoulDistrictOverview()" style="display:none;position:absolute;left:10px;top:10px;z-index:4;border:1px solid #D7E3F7;background:#FFF;color:#1A56DB;border-radius:999px;padding:8px 11px;font-size:10px;font-weight:900;box-shadow:0 2px 8px rgba(15,23,42,.12);cursor:pointer;">← 서울 전체보기</button>
       </div>
 
-      <div class="district-picker" id="district-picker" aria-label="서울 25개 자치구 선택"></div>
-      <div class="district-selected" id="district-selected">선택한 자치구 없음</div>
+      <div id="district-overview-guide" style="padding:11px 12px;border:1px solid #DBEAFE;background:#EFF6FF;border-radius:11px;color:#1E40AF;font-size:11px;line-height:1.55;margin-bottom:10px;"><strong>🗺️ 지도에서 자치구를 선택하세요.</strong><br>지도 위의 자치구 이름을 눌러 여행할 지역을 여러 개 선택할 수 있어요.</div>
 
-      <div class="region-preview" id="preview-box">
-        <div class="preview-thumb" id="preview-img" style="background-image: url('https://korean.visitseoul.net/comm/getImage?srvcId=POST&parentSn=45426&fileTy=POSTIMG&fileNo=1');"></div>
-        <div class="preview-info">
-          <div class="preview-tag" id="preview-tag">인디 서브컬처 & 연트럴파크</div>
-          <div class="preview-title" id="preview-title">홍대 · 연남 권역</div>
-          <div class="preview-desc" id="preview-desc">골목 소품샵과 버스킹, 감성 펍과 연트럴파크 잔디밭이 어우러진 젊은 로컬의 성지</div>
+      <div id="district-selected-box" style="padding:10px 11px;border:1px solid #E2E8F0;background:#FFFFFF;border-radius:11px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;"><strong style="font-size:11px;color:#0F172A;">📌 선택한 자치구</strong><span id="district-selected-count" style="font-size:10px;font-weight:800;color:#1A56DB;">0개 선택</span></div>
+        <div id="district-selected-list" style="display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:10px;color:#94A3B8;">지도에서 여행할 자치구를 여러 개 선택해보세요.</span></div>
+      </div>
+
+      <div id="district-info-panel" style="display:none;">
+        <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px rgba(15,23,42,.04);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;"><div><div id="district-info-name" style="font-size:17px;font-weight:900;color:#0F172A;"></div><div id="district-info-keyword" style="font-size:10px;font-weight:800;color:#1A56DB;margin-top:3px;"></div></div><span style="font-size:9px;padding:4px 7px;border-radius:999px;background:#EBF2FE;color:#1A56DB;font-weight:900;white-space:nowrap;">SEOUL DISTRICT</span></div>
+          <div id="district-info-history" style="font-size:11px;color:#475569;line-height:1.65;margin-top:9px;"></div>
+          <div id="district-info-feature" style="font-size:11px;color:#0F172A;line-height:1.55;margin-top:7px;padding-top:7px;border-top:1px dashed #E2E8F0;"></div>
         </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
+          <button type="button" class="chip active" id="district-tab-attraction" onclick="filterDistrictPlaces('attraction',this)">관광명소</button>
+          <button type="button" class="chip" id="district-tab-food" onclick="filterDistrictPlaces('food',this)">맛집</button>
+          <button type="button" class="chip" id="district-tab-cafe" onclick="filterDistrictPlaces('cafe',this)">카페</button>
+        </div>
+        <div id="district-live-title" style="font-size:14px;font-weight:900;color:#0F172A;margin:8px 0 3px;"></div>
+        <div style="font-size:10px;color:#64748B;line-height:1.45;margin-bottom:8px;">카카오 장소검색의 정확도순 상위 결과입니다.</div>
+        <div id="district-place-list" style="display:grid;grid-template-columns:1fr;gap:7px;"></div>
       </div>
     </div>
 
@@ -728,13 +738,15 @@
   <div class="custom-modal-overlay" id="route-navigation-modal">
     <div class="route-modal-card">
       <div class="route-modal-header">
-        <span style="font-weight: 800; font-size: 13px;">🚶‍♂️ 스마트 길찾기 & 이동 안내</span>
-        <button onclick="closeRouteModal()" style="background:none; border:none; color:#FFF; font-size:18px; cursor:pointer;">✕</button>
+        <span style="font-weight:800;font-size:13px;">🧭 스마트 길찾기 & 이동 안내</span>
+        <button onclick="closeRouteModal()" style="background:none;border:none;color:#FFF;font-size:18px;cursor:pointer;">✕</button>
       </div>
       <div class="route-map-area" id="kakao-route-map"></div>
+      <div id="route-live-status" style="margin:8px 12px 0;padding:8px 10px;border-radius:8px;background:#EFF6FF;color:#1D4ED8;font-size:11px;font-weight:700;">📡 길찾기 준비 중...</div>
       <div class="route-details-area">
-        <div id="route-summary-box" style="padding: 10px; background:#EBF2FE; border-radius:8px; font-weight:700; color:var(--seoul-blue); margin-bottom:10px;"></div>
+        <div id="route-summary-box" style="padding:10px;background:#EBF2FE;border-radius:8px;font-weight:700;color:var(--seoul-blue);margin-bottom:10px;"></div>
         <div id="route-step-list"></div>
+        <div class="route-alt-actions"><button class="route-link-btn" onclick="openKakaoMapExternalRoute()">🟡 카카오맵 길찾기 바로 열기</button></div>
       </div>
       <div style="padding: 12px; background: #FFF; border-top: 1px solid var(--border-color);">
         <button class="btn btn-primary" onclick="closeRouteModal()" style="width: 100%;">확인 완료</button>
@@ -1908,6 +1920,7 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
   updateUI();
 </script>
 <script src="visit-ui.js"></script>
+<script src="kakao-integration.js"></script>
 <script async src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" onload="if(window.currentStep===10)renderTravelStory()"></script>
 </body>
 </html>
