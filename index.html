@@ -515,7 +515,9 @@
           <select id="duration-picker">
             <option value="4">약 4시간 (간단 투어)</option>
             <option value="6">약 6시간 (반일 코스)</option>
-            <option value="8" selected>약 8시간 (전일 코스)</option>
+            <option value="8" selected>약 8시간</option>
+            <option value="10">약 10시간</option>
+            <option value="12">약 12시간 (전일 코스)</option>
           </select>
         </div>
       </div>
@@ -532,37 +534,21 @@
 
     <!-- STEP 6: 서울 전체 지도에서 자치구 탐색 + Kakao Maps 장소 미리보기 -->
     <div class="step-page" id="step6">
-      <div class="step-title">서울 지도에서 여행지 탐색</div>
-      <div class="step-desc">서울 전체 지도를 보고 관심 있는 자치구를 눌러 지역 이야기와 관광명소·맛집·카페를 살펴보세요.</div>
+      <div class="step-title">여행할 서울 자치구 선택</div>
+      <div class="step-desc">현재 지도 배율에서 여러 자치구를 선택하면 각 지역이 일정에 골고루 반영됩니다.</div>
 
       <div style="position:relative;background:#E2E8F0;border-radius:14px;overflow:hidden;border:1px solid #CBD5E1;margin-bottom:10px;">
         <div id="district-kakao-map" style="width:100%;height:360px;"></div>
         <div id="district-map-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);font-size:12px;font-weight:800;color:#1A56DB;z-index:5;text-align:center;padding:20px;">서울 전체 지도를 불러오는 중...</div>
-        <button type="button" id="district-reset-btn" onclick="showSeoulDistrictOverview()" style="display:none;position:absolute;left:10px;top:10px;z-index:4;border:1px solid #D7E3F7;background:#FFF;color:#1A56DB;border-radius:999px;padding:8px 11px;font-size:10px;font-weight:900;box-shadow:0 2px 8px rgba(15,23,42,.12);cursor:pointer;">← 서울 전체보기</button>
       </div>
 
-      <div id="district-overview-guide" style="padding:11px 12px;border:1px solid #DBEAFE;background:#EFF6FF;border-radius:11px;color:#1E40AF;font-size:11px;line-height:1.55;margin-bottom:10px;"><strong>🗺️ 지도에서 자치구를 선택하세요.</strong><br>지도 위의 자치구 이름을 눌러 여행할 지역을 여러 개 선택할 수 있어요.</div>
+      <div id="district-overview-guide" style="padding:11px 12px;border:1px solid #DBEAFE;background:#EFF6FF;border-radius:11px;color:#1E40AF;font-size:11px;line-height:1.55;margin-bottom:10px;"><strong>🗺️ 자치구 이름을 눌러 복수 선택하세요.</strong><br>한 번 더 누르면 선택이 해제됩니다. 지도는 확대되지 않습니다.</div>
 
       <div id="district-selected-box" style="padding:10px 11px;border:1px solid #E2E8F0;background:#FFFFFF;border-radius:11px;margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;"><strong style="font-size:11px;color:#0F172A;">📌 선택한 자치구</strong><span id="district-selected-count" style="font-size:10px;font-weight:800;color:#1A56DB;">0개 선택</span></div>
         <div id="district-selected-list" style="display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:10px;color:#94A3B8;">지도에서 여행할 자치구를 여러 개 선택해보세요.</span></div>
       </div>
 
-      <div id="district-info-panel" style="display:none;">
-        <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px rgba(15,23,42,.04);">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;"><div><div id="district-info-name" style="font-size:17px;font-weight:900;color:#0F172A;"></div><div id="district-info-keyword" style="font-size:10px;font-weight:800;color:#1A56DB;margin-top:3px;"></div></div><span style="font-size:9px;padding:4px 7px;border-radius:999px;background:#EBF2FE;color:#1A56DB;font-weight:900;white-space:nowrap;">SEOUL DISTRICT</span></div>
-          <div id="district-info-history" style="font-size:11px;color:#475569;line-height:1.65;margin-top:9px;"></div>
-          <div id="district-info-feature" style="font-size:11px;color:#0F172A;line-height:1.55;margin-top:7px;padding-top:7px;border-top:1px dashed #E2E8F0;"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
-          <button type="button" class="chip active" id="district-tab-attraction" onclick="filterDistrictPlaces('attraction',this)">관광명소</button>
-          <button type="button" class="chip" id="district-tab-food" onclick="filterDistrictPlaces('food',this)">맛집</button>
-          <button type="button" class="chip" id="district-tab-cafe" onclick="filterDistrictPlaces('cafe',this)">카페</button>
-        </div>
-        <div id="district-live-title" style="font-size:14px;font-weight:900;color:#0F172A;margin:8px 0 3px;"></div>
-        <div style="font-size:10px;color:#64748B;line-height:1.45;margin-bottom:8px;">카카오 장소검색의 정확도순 상위 결과입니다.</div>
-        <div id="district-place-list" style="display:grid;grid-template-columns:1fr;gap:7px;"></div>
-      </div>
     </div>
 
     <!-- STEP 7: 매칭 조건 확인 -->
@@ -685,6 +671,18 @@
   <div class="footer" id="main-footer">
     <button class="btn btn-secondary" id="prev-btn" onclick="prevStep()" style="display: none;">이전</button>
     <button class="btn btn-primary" id="next-btn" onclick="nextStep()">다음</button>
+  </div>
+
+  <!-- 필수 입력 경고 모달 -->
+  <div class="custom-modal-overlay" id="name-required-modal" role="dialog" aria-modal="true" aria-labelledby="name-required-title">
+    <div class="modal-card">
+      <div class="modal-body">
+        <div style="font-size:38px;margin-bottom:10px;">⚠️</div>
+        <div class="modal-title" id="name-required-title">이름을 입력해주세요</div>
+        <div class="modal-sub">서울메이트가 여행자를 부를 이름 또는 닉네임이 필요합니다.</div>
+        <button class="btn btn-primary" onclick="closeNameRequiredModal()" style="width:100%;">확인</button>
+      </div>
+    </div>
   </div>
 
   <!-- 인트로 영상 모달 -->
@@ -924,7 +922,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     const duration = parseInt(document.getElementById('duration-picker')?.value || '8');
     const sourceSpots = window.visitDataMode === 'live' ? window.visitLiveSpots : window.visitDataMode === 'demo' ? (regionSpotPool[window.selectedRegionKey] || regionSpotPool.hongdae) : [];
     const allSpots = (sourceSpots || []).filter(p => !(window.visitedPlaces || []).some(v => v.id === 'hongdae-street' && p.id === 'HD_2'));
-    const spotCount = (duration === 4) ? 3 : (duration === 6 ? 4 : 5);
+    const spotCount = duration === 4 ? 3 : duration === 6 ? 4 : duration === 8 ? 5 : duration === 10 ? 6 : 7;
     window.activeTotalPlans = Math.min(spotCount, allSpots.length);
     window.currentDisplayedSpots = allSpots.slice(0, spotCount);
     buildTimelineUI(startHour, duration);
@@ -942,7 +940,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     window.currentDisplayedSpots.forEach((plan, idx) => {
       const planNum = idx + 1;
       const currentPlanHour = Number.isFinite(Number(plan.preferredStart)) ? Number(plan.preferredStart) : Math.floor(startHour + (idx * interval));
-      const timeString = plan.startTime ? `${plan.startTime}–${plan.endTime}${plan.mealSlot==='lunch'?' · 점심 식사':plan.mealSlot==='dinner'?' · 저녁 식사':''}` : formatHour(currentPlanHour);
+      const timeString = plan.startTime ? `${plan.startTime}–${plan.endTime}${plan.mealSlot==='lunch'?' · 점심 식사':plan.mealSlot==='dinner'?' · 저녁 식사':plan.nightSlot?' · 야간 바·펍':''}` : formatHour(currentPlanHour);
       const isLast = idx === window.currentDisplayedSpots.length - 1;
 
       let congClass = 'cong-low';
@@ -1172,8 +1170,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     if (mDialog) mDialog.innerText = `"${nickname} 님과 함께할 ${age}세 ${window.currentMateName}님과 서울메이트가 되셨습니다! ${window.currentMateName}님과 일정을 함께 하시겠어요?"`;
     if (pMateName) pMateName.innerText = `${avatarEmoji} ${age}세 ${window.currentMateName} 메이트와 동행 중`;
 
-    const reg = regionData[window.selectedRegionKey] || regionData.hongdae;
-    if (vModalText) vModalText.innerText = `"${age}세 ${window.currentMateName} 님과의 오늘 ${reg.title} 로컬 투어가 본격적으로 시작되었습니다!"`;
+    if (vModalText) vModalText.innerText = `"${window.currentMateName} 메이트와의 서울투어가 본격적으로 시작되었습니다!"`;
   }
 
   function openIntroVideo() {
@@ -1270,7 +1267,19 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     window.aiInterestProfile={summary:selected.join(', ')||'서울 로컬 탐방',keywords:selected,visitCategories:[...new Set(selected.flatMap(value=>categoryMap[value]||[]))],moodTags:[]};
   }
 
+  window.closeNameRequiredModal = function(){
+    const modal=document.getElementById('name-required-modal');
+    if(modal)modal.style.display='none';
+    const input=document.getElementById('nickname');
+    input?.focus();
+  };
+
   window.nextStep = async function() {
+    if(window.currentStep===1&&!document.getElementById('nickname')?.value.trim()){
+      const modal=document.getElementById('name-required-modal');
+      if(modal)modal.style.display='flex';
+      return;
+    }
     if (window.currentStep < 7) {
       if(window.currentStep===4)collectStep4Interests();
       window.currentStep++;

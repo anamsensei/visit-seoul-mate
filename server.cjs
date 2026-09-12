@@ -80,7 +80,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     const region=url.searchParams.get('region')||'hongdae';
     const limit=Number(url.searchParams.get('limit')||5);
     const startHour=Number(url.searchParams.get('startHour')||11),duration=Number(url.searchParams.get('duration')||8);
-    if(!Number.isInteger(limit)||limit<1||limit>5||!Number.isFinite(startHour)||startHour<0||startHour>23||![4,6,8].includes(duration)||startHour+duration>24)return reply(400,{error:'INVALID_SCHEDULE'});
+    if(!Number.isInteger(limit)||limit<1||limit>7||!Number.isFinite(startHour)||startHour<0||startHour>23||![4,6,8,10,12].includes(duration)||startHour+duration>24)return reply(400,{error:'INVALID_SCHEDULE'});
     // Local insights has its own endpoint. It previously delayed this response without
     // affecting place selection; do not fail an official itinerary on social lookup failure.
     try{const result=await visit.recommend({region,regions,categories,interests,visited,visitedNames,limit,startHour,duration}); return reply(200,result);}

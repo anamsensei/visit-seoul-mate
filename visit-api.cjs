@@ -188,7 +188,7 @@ function createVisitService(options = {}) {
     const {selectItinerary,valid,restaurant,km,CENTERS}=require('./itinerary.cjs');
     const wanted=[...new Set(categories.filter(c=>CATEGORY_CODES[c]))];
     if(!wanted.length)wanted.push('문화관광','음식','체험관광');
-    limit=Math.min(5,Math.max(1,Number(limit)||5));
+    limit=Math.min(7,Math.max(1,Number(limit)||5));
     const selectedRegions=[...new Set((regions.length?regions:[region]).filter(Boolean))];
     const words=[...new Set(selectedRegions.flatMap(r=>DISTRICT_KEYWORDS[r]||REGION_KEYWORDS[r]||[r]).concat(REGION_KEYWORDS[region]||[]))];
     const preferenceWords=[...new Set(interests.map(text).filter(Boolean))];
@@ -213,14 +213,12 @@ function createVisitService(options = {}) {
       let stageAttempts=0;
       for(let offset=0;offset<queue.length&&attempted.size<80&&stageAttempts<24&&Date.now()<deadline;offset+=8){
         await parallel(queue.slice(offset,offset+Math.min(8,80-attempted.size)),async p=>{
-          const center=CENTERS[region]||CENTERS.hongdae;
-          if(restaurant(p)&&[...usable.values()].filter(v=>restaurant(v)&&km({lat:center[0],lng:center[1]},v)<=5).length>=2)return;
           stageAttempts++;
           attempted.add(p.id);diagnostics.detailRequests++;
           let d;try{d=await detail(p.id,p);}catch(e){lastError=e;diagnostics.detailFailures++;if(valid(p))d={...p,source:'visitseoul',detailUnavailable:true};}
           if(valid(d))usable.set(d.id,{...d,relevance:relevance(d),congestion:null});else diagnostics.invalidCoordinates++;
         });
-        if(selectItinerary([...usable.values()],{region,limit,startHour,duration}).complete)break;
+        if(selectItinerary([...usable.values()],{region,regions:selectedRegions,limit,startHour,duration}).complete)break;
       }
     }
     const selectedCategories=[...new Set([...wanted,'음식'])];
@@ -229,12 +227,13 @@ function createVisitService(options = {}) {
       // Category-free regional search also recovers from a failing category endpoint.
       words.map(keyword=>({keyword,page:1})),
       words.flatMap(keyword=>[2,3].map(page=>({keyword,page}))),
+      (startHour*60+duration*60>=1260)?words.flatMap(keyword=>['바','펍','술집','주점'].map(suffix=>({keyword:`${keyword} ${suffix}`,page:1}))):[],
       [...new Set([...selectedCategories,'문화관광','쇼핑','역사관광','자연관광','체험관광'])].map(c=>({categoryCode:CATEGORY_CODES[c],keyword:'',page:1}))
     ];
     let result={places:[],complete:false};
     for(const jobs of stages){
       await collect(jobs);await hydrate();
-      result=selectItinerary([...usable.values()],{region,limit,startHour,duration});
+      result=selectItinerary([...usable.values()],{region,regions:selectedRegions,limit,startHour,duration});
       if(result.complete||Date.now()>=deadline)break;
     }
     if(!successfulLists&&lastError)throw lastError;

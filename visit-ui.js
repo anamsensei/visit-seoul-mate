@@ -43,7 +43,7 @@
       if (location.protocol === 'file:' && !base()) throw new Error('ROUTE_MISSING');
       const duration=Number(document.getElementById('duration-picker')?.value)||8;
       const startHour=Number(document.getElementById('start-time-picker')?.value)||11;
-      const limit=duration===4?3:duration===6?4:5;
+      const limit=duration===4?3:duration===6?4:duration===8?5:duration===10?6:7;
       const params = new URLSearchParams({ region, regions: regions.join(','), categories: categories.join(','), interests:interests.join(','), visited: visited.join(','), visitedNames:visitedNames.join('|'), limit:String(limit),startHour:String(startHour),duration:String(duration) });
       const response = await fetch(base() + '/api/visit/recommend?' + params, { signal: activeController.signal });
       if (response.status === 404) throw new Error('ROUTE_MISSING');
