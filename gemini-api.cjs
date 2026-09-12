@@ -1,22 +1,29 @@
-const DEFAULT_MODEL='gemini-2.5-flash-lite';
+const DEFAULT_MODEL='gemini-3.7-flash';
 const ALLOWED_CATEGORIES=['문화관광','쇼핑','숙박','역사관광','음식','자연관광','체험관광','축제/공연/행사'];
 
 function createGeminiService(options={}) {
   const fetchImpl=options.fetchImpl||globalThis.fetch;
   const key=options.apiKey??process.env.GEMINI_API_KEY??process.env.GOOGLE_API_KEY??process.env.AI_KEY??'';
   const model=options.model||process.env.GEMINI_MODEL||DEFAULT_MODEL;
+  const models=[...new Set([model,'gemini-3.7-flash','gemini-2.5-flash-lite'])];
   const configured=Boolean(key);
-  async function generate(prompt,schema) {
+  async function generate(prompt) {
     if(!configured) throw new Error('GEMINI_NOT_CONFIGURED');
-    const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-    const response=await fetchImpl(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({
-      contents:[{role:'user',parts:[{text:prompt}]}],
-      generationConfig:{temperature:0,responseMimeType:'application/json',responseSchema:schema,maxOutputTokens:900}
-    }),signal:AbortSignal.timeout(20000)});
-    if(!response.ok) throw new Error(`GEMINI_${response.status}`);
-    const data=await response.json();
-    const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
-    try{return JSON.parse(raw);}catch{throw new Error('GEMINI_INVALID_RESPONSE');}
+    let lastError;
+    for(const candidateModel of models){
+      const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidateModel)}:generateContent`;
+      const response=await fetchImpl(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0,responseMimeType:'application/json',maxOutputTokens:900}
+      }),signal:AbortSignal.timeout(20000)});
+      if(!response.ok){
+        const detail=(await response.text().catch(()=>'' )).slice(0,300).replace(/\s+/g,' ');
+        lastError=new Error(`GEMINI_${response.status}`);console.warn(`[gemini] ${candidateModel} ${response.status} ${detail}`);
+        if(response.status===404)continue;throw lastError;
+      }
+      const data=await response.json();const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+      try{return JSON.parse(raw);}catch{throw new Error('GEMINI_INVALID_RESPONSE');}
+    }
+    throw lastError||new Error('GEMINI_UNAVAILABLE');
   }
   async function normalizePlaces(text) {
     const inputs=String(text||'').split(/[,，、;；\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,12);

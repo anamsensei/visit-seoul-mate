@@ -41,8 +41,13 @@ function createServer(){return http.createServer(async(req,res)=>{
     }catch(error){return reply(error.message==='BODY_TOO_LARGE'?413:502,{error:error.message||'GEMINI_UNAVAILABLE'});}
   }
   if(req.method!=='GET')return reply(405,{error:'METHOD_NOT_ALLOWED'});
-  if(url.pathname==='/health')return reply(200,{ok:true,build:'gemini-step2-step4-20260912-1',geminiConfigured:gemini.configured,commit:process.env.RENDER_GIT_COMMIT||null});
+  if(url.pathname==='/health')return reply(200,{ok:true,build:'visited-custom-place-20260912-1',geminiConfigured:gemini.configured,geminiModel:gemini.model,commit:process.env.RENDER_GIT_COMMIT||null});
   if(url.pathname==='/api/ai/status')return reply(200,{configured:gemini.configured,provider:'gemini',model:gemini.model});
+  if(url.pathname==='/api/ai/test'){
+    if(!gemini.configured)return reply(503,{ok:false,error:'GEMINI_NOT_CONFIGURED'});
+    try{return reply(200,{ok:true,result:await gemini.normalizePlaces('Seonyudo Park')});}
+    catch(error){return reply(502,{ok:false,error:error.message||'GEMINI_UNAVAILABLE'});}
+  }
   if(url.pathname==='/api/city'){
     const area=url.searchParams.get('area');
     if(!AREAS.includes(area))return reply(400,{error:'INVALID_AREA'});
@@ -70,6 +75,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     const categories=(url.searchParams.get('categories')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const interests=(url.searchParams.get('interests')||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,8);
     const visited=(url.searchParams.get('visited')||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const visitedNames=(url.searchParams.get('visitedNames')||'').split('|').map(s=>s.trim()).filter(Boolean).slice(0,30);
     const regions=(url.searchParams.get('regions')||'').split(',').map(s=>s.trim()).filter(Boolean);
     const region=url.searchParams.get('region')||'hongdae';
     const limit=Number(url.searchParams.get('limit')||5);
@@ -77,7 +83,7 @@ function createServer(){return http.createServer(async(req,res)=>{
     if(!Number.isInteger(limit)||limit<1||limit>5||!Number.isFinite(startHour)||startHour<0||startHour>23||![4,6,8].includes(duration)||startHour+duration>24)return reply(400,{error:'INVALID_SCHEDULE'});
     // Local insights has its own endpoint. It previously delayed this response without
     // affecting place selection; do not fail an official itinerary on social lookup failure.
-    try{const result=await visit.recommend({region,regions,categories,interests,visited,limit,startHour,duration}); return reply(200,result);}
+    try{const result=await visit.recommend({region,regions,categories,interests,visited,visitedNames,limit,startHour,duration}); return reply(200,result);}
     catch(error){return reply(error.message==='VISITSEOUL_NOT_CONFIGURED'?503:502,{mode:'error',source:'visitseoul',error:error.message,message:'비짓서울 API에서 추천 데이터를 가져오지 못했습니다.'});}
   }
   if(url.pathname.startsWith('/api/visit/place/')){

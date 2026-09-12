@@ -1,5 +1,6 @@
-// Multilingual place resolver. The returned IDs are restricted to the Visit Seoul
-// catalog used by the Step 2 UI, so free-form input cannot introduce outside places.
+// Multilingual visited-place resolver. Official matches keep their Visit Seoul ID;
+// unmatched inputs receive a stable custom ID and are used only as exclusion data.
+const {createHash}=require('node:crypto');
 const PLACES = Object.freeze([
   ['myeongdong','명동 쇼핑거리','중구','Myeongdong|Myeongdong Shopping Street|明洞|明洞购物街|明洞ショッピング通り'],
   ['gyeongbokgung','경복궁 · 광화문','종로구','Gyeongbokgung|Gyeongbokgung Palace|景福宮|景福宫|경복궁|광화문|Gwanghwamun|พระราชวังคยองบกกุง'],
@@ -19,6 +20,7 @@ const PLACES = Object.freeze([
 ].map(([id,name,area,aliases]) => ({id,name,area,aliases:aliases.split('|')})));
 
 const normalize = value => String(value ?? '').normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
+const customId=(input,name)=>'custom-'+createHash('sha256').update(`${input}\n${name}`).digest('hex').slice(0,16);
 const catalog = PLACES.map(p => ({...p, keys:[p.name,...p.aliases].map(normalize)}));
 const EXTRA_ALIASES = Object.freeze({
   '선유도공원':['Seonyudo Park','Seonyudo Island'],'문화비축기지':['Oil Tank Culture Park'],
@@ -91,14 +93,20 @@ function createPlaceResolver(visitService,geminiService) {
           }
           const ranked=[...matched.values()].sort((a,b)=>b.matchScore-a.matchScore).slice(0,3);
           ranked.forEach(p=>places.set(String(p.id),{id:String(p.id),name:p.title,area:p.address||'서울'}));
-          results.push({input:String(item.input||''),ids:ranked.map(p=>String(p.id))});
+          if(ranked.length)results.push({input:String(item.input||''),ids:ranked.map(p=>String(p.id))});
+          else{
+            const input=String(item.input||'').trim(),name=String(item.koreanNames?.[0]||input).trim();
+            const id=customId(input,name);places.set(id,{id,name,area:'사용자 입력',official:false});results.push({input,ids:[id]});
+          }
         }
-        if(results.some(r=>r.ids.length))return {results,places:[...places.values()],ai:true};
-      }catch{}
+        if(results.length)return {results,places:[...places.values()],ai:true};
+      }catch(error){console.warn(`[place-resolver] ${error?.message||error}`);}
     }
     const source = await liveCatalog();
     const inputs = String(text ?? '').split(/[,，、;；\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,12);
-    return {results:inputs.map(input=>({input,ids:source.map(p=>({p,score:score(input,p)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=72).slice(0,3).map(x=>x.p.id)})),places:source.map(({id,name,area})=>({id,name,area})),ai:false};
+    const places=source.map(({id,name,area})=>({id,name,area}));
+    const results=inputs.map(input=>{const ids=source.map(p=>({p,score:score(input,p)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>=72).slice(0,3).map(x=>x.p.id);if(ids.length)return {input,ids};const id=customId(input,input);places.push({id,name:input,area:'사용자 입력',official:false});return {input,ids:[id]};});
+    return {results,places,ai:false};
   }
   return {resolveLive};
 }

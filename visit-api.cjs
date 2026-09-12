@@ -32,6 +32,7 @@ const LIST_PATH = '/api/v1/contents/list';
 const INFO_PATH = '/api/v1/contents/info';
 
 const text = value => String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const matchKey = value => text(value).normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]/gu,'');
 const first = (...values) => values.find(value => value !== undefined && value !== null && String(value).trim() !== '');
 const number = value => { if(value == null || String(value).trim() === '')return null; const n = Number(value); return Number.isFinite(n) ? n : null; };
 const safeUrl = value => { try { const u = new URL(String(value)); return /^https?:$/.test(u.protocol) ? u.toString() : ''; } catch { return ''; } };
@@ -182,7 +183,7 @@ function createVisitService(options = {}) {
     }
     return { mode:'live', source:'visitseoul', total:places.size, places:[...places.values()], categories, districts, failures, generatedAt:new Date().toISOString() };
   }
-  async function recommend({ region = 'hongdae', regions = [], categories = [], interests = [], visited = [], limit = 5, startHour=11, duration=8 } = {}) {
+  async function recommend({ region = 'hongdae', regions = [], categories = [], interests = [], visited = [], visitedNames = [], limit = 5, startHour=11, duration=8 } = {}) {
     if (!configured) return { mode: 'unconfigured', source: 'visitseoul', places: [] };
     const {selectItinerary,valid,restaurant,km,CENTERS}=require('./itinerary.cjs');
     const wanted=[...new Set(categories.filter(c=>CATEGORY_CODES[c]))];
@@ -192,6 +193,7 @@ function createVisitService(options = {}) {
     const words=[...new Set(selectedRegions.flatMap(r=>DISTRICT_KEYWORDS[r]||REGION_KEYWORDS[r]||[r]).concat(REGION_KEYWORDS[region]||[]))];
     const preferenceWords=[...new Set(interests.map(text).filter(Boolean))];
     const excluded=new Set(visited.map(String));
+    const excludedNames=[...new Set(visitedNames.map(matchKey).filter(Boolean))];
     const candidates=new Map(),usable=new Map(),attempted=new Set(),failedCategories=new Set();
     const diagnostics={listRequests:0,listFailures:0,detailRequests:0,detailFailures:0,invalidCoordinates:0,filteredVisited:0};
     const deadline=Date.now()+65000;let successfulLists=0,lastError;
@@ -199,7 +201,7 @@ function createVisitService(options = {}) {
     async function collect(jobs){await parallel(jobs,async job=>{
       diagnostics.listRequests++;
       try{const rows=await list(job);successfulLists++;
-        for(const p of rows){if(excluded.has(p.id)){diagnostics.filteredVisited++;continue;}if(!candidates.has(p.id))candidates.set(p.id,p);}
+        for(const p of rows){const titleKey=matchKey(p.title);if(excluded.has(p.id)||excludedNames.some(name=>titleKey===name||titleKey.includes(name)||name.includes(titleKey))){diagnostics.filteredVisited++;continue;}if(!candidates.has(p.id))candidates.set(p.id,p);}
       }catch(e){lastError=e;diagnostics.listFailures++;if(job.categoryCode)failedCategories.add(CATEGORY_BY_CODE[job.categoryCode]);}
     });}
     const relevance=p=>words.filter(w=>[p.title,p.desc,p.address].join(' ').includes(w)).length*5+preferenceWords.filter(w=>[p.title,p.desc,p.categoryPath].join(' ').includes(w)).length*3+(wanted.includes(p.category)?2:0);
