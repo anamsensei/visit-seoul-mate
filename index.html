@@ -368,6 +368,7 @@
       <div class="form-group">
         <label>국적 / Nationality</label>
         <select id="nationality">
+          <option value="" selected disabled>국적을 선택해주세요</option>
           <option>태국 (Thailand)</option><option>일본 (Japan)</option><option>대만 (Taiwan)</option>
           <option>미국 (USA)</option><option>중국 (China)</option><option>기타 국적</option>
         </select>
@@ -375,12 +376,13 @@
       <div class="form-group grid-2">
         <div>
           <label>연령대</label>
-          <input type="number" id="user-age" value="22">
+          <input type="number" id="user-age" min="1" max="120" placeholder="나이를 입력해주세요">
         </div>
         <div>
           <label>성별</label>
           <select id="user-gender">
-            <option value="male" selected>남성</option>
+            <option value="" selected disabled>성별을 선택해주세요</option>
+            <option value="male">남성</option>
             <option value="female">여성</option>
           </select>
         </div>
@@ -396,7 +398,7 @@
         <label>서울 방문 횟수</label>
         <div class="grid-3">
           <div class="chip" onclick="selectChip(this)">1회 (첫 방문)</div>
-          <div class="chip active" onclick="selectChip(this)">2~3회 (재방문)</div>
+          <div class="chip" onclick="selectChip(this)">2~3회 (재방문)</div>
           <div class="chip" onclick="selectChip(this)">4회 이상</div>
         </div>
       </div>
@@ -404,8 +406,8 @@
       <div class="form-group">
         <label>외래관광객 인기 10대 명소 (가본 곳 제외 체크)</label>
         <div class="grid-2" style="font-size: 11px;">
-          <div class="chip active" onclick="toggleChip(this)">1. 명동 쇼핑거리</div>
-          <div class="chip active" onclick="toggleChip(this)">2. 경복궁 · 광화문</div>
+          <div class="chip" onclick="toggleChip(this)">1. 명동 쇼핑거리</div>
+          <div class="chip" onclick="toggleChip(this)">2. 경복궁 · 광화문</div>
           <div class="chip" onclick="toggleChip(this)">3. N서울타워 (남산)</div>
           <div class="chip" onclick="toggleChip(this)">4. 북촌한옥마을</div>
           <div class="chip" onclick="toggleChip(this)">5. 홍대 걷고싶은거리</div>
@@ -449,9 +451,9 @@
           <div class="chip" data-visit-category="쇼핑" onclick="toggleChip(this)">쇼핑</div>
           <div class="chip" data-visit-category="숙박" onclick="toggleChip(this)">숙박 (연계)</div>
           <div class="chip" data-visit-category="역사관광" onclick="toggleChip(this)">역사관광</div>
-          <div class="chip active" data-visit-category="음식" onclick="toggleChip(this)">음식 (미식투어)</div>
+          <div class="chip" data-visit-category="음식" onclick="toggleChip(this)">음식 (미식투어)</div>
           <div class="chip" data-visit-category="자연관광" onclick="toggleChip(this)">자연관광</div>
-          <div class="chip active" data-visit-category="체험관광" onclick="toggleChip(this)">체험관광</div>
+          <div class="chip" data-visit-category="체험관광" onclick="toggleChip(this)">체험관광</div>
           <div class="chip" data-visit-category="축제/공연/행사" onclick="toggleChip(this)">축제/행사</div>
         </div>
       </div>
@@ -460,7 +462,7 @@
         <label>선호하는 여행분위기 (혼잡도 민감도 반영)</label>
         <div class="grid-3" id="mood-selector">
           <div class="chip" data-congestion-sens="20" onclick="selectChip(this)">활기차고 북적이는</div>
-          <div class="chip active" data-congestion-sens="90" onclick="selectChip(this)">여유롭고 조용한</div>
+          <div class="chip" data-congestion-sens="90" onclick="selectChip(this)">여유롭고 조용한</div>
           <div class="chip" data-congestion-sens="50" onclick="selectChip(this)">적절히 섞어서</div>
         </div>
       </div>
@@ -475,11 +477,11 @@
         <label>오늘 가장 끌리는 관심사</label>
         <div class="grid-2" style="font-size: 11px;">
           <div class="chip" data-ai-interest="K-뷰티 퍼스널컬러" onclick="toggleChip(this)">💄 K-뷰티 · 퍼스널컬러</div>
-          <div class="chip active" data-ai-interest="K-POP 굿즈 엔터테인먼트" onclick="toggleChip(this)">🎵 K-POP · 굿즈/엔터</div>
+          <div class="chip" data-ai-interest="K-POP 굿즈 엔터테인먼트" onclick="toggleChip(this)">🎵 K-POP · 굿즈/엔터</div>
           <div class="chip" data-ai-interest="한국 역사 고궁" onclick="toggleChip(this)">🏛️ 한국의 역사 · 고궁</div>
           <div class="chip" data-ai-interest="K-드라마 촬영지" onclick="toggleChip(this)">🎬 K-드라마 · 촬영지</div>
-          <div class="chip active" data-ai-interest="로컬 패션 빈티지" onclick="toggleChip(this)">🧢 로컬 패션 · 빈티지</div>
-          <div class="chip active" data-ai-interest="감성 카페 디저트" onclick="toggleChip(this)">☕ 감성 카페 & 디저트</div>
+          <div class="chip" data-ai-interest="로컬 패션 빈티지" onclick="toggleChip(this)">🧢 로컬 패션 · 빈티지</div>
+          <div class="chip" data-ai-interest="감성 카페 디저트" onclick="toggleChip(this)">☕ 감성 카페 & 디저트</div>
         </div>
       </div>
 
@@ -526,7 +528,7 @@
         <label>도보 이동 선호 (이동 민감도 가중치)</label>
         <div class="grid-3" id="walk-sens-selector">
           <div class="chip" data-walk-sens="90" onclick="selectChip(this)">최소한만</div>
-          <div class="chip active" data-walk-sens="60" onclick="selectChip(this)">적당한 산책</div>
+          <div class="chip" data-walk-sens="60" onclick="selectChip(this)">적당한 산책</div>
           <div class="chip" data-walk-sens="20" onclick="selectChip(this)">많이 걸어도 OK</div>
         </div>
       </div>
@@ -566,7 +568,7 @@
       <div style="background:#FFF; padding:14px; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:10px;">
         <div style="font-size:11px; color:var(--seoul-blue); font-weight:700;">기본 프로필 & 세부 관심사</div>
         <div style="font-size:12px;color:#64748B;margin-bottom:6px">가본 곳 · 추천 제외: <span id="sum-visited" style="color:#1A56DB;line-height:1.6">선택한 장소 없음</span></div>
-        <div id="sum-profile" style="font-size:13px; font-weight:700; margin-top:2px;">여행자 (22세 남성) / 로컬 패션, 카페투어</div>
+        <div id="sum-profile" style="font-size:13px; font-weight:700; margin-top:2px;">입력한 프로필과 관심사를 확인합니다.</div>
       </div>
       <div style="background:#FFF; padding:14px; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:10px;">
         <div style="font-size:11px; color:var(--seoul-blue); font-weight:700;">출발지 및 일정 조건</div>
@@ -574,7 +576,7 @@
       </div>
       <div style="background:#FFF; padding:14px; border-radius:12px; border:1px solid #E2E8F0;">
         <div style="font-size:11px; color:var(--seoul-blue); font-weight:700;">선택 로컬 권역</div>
-        <div id="sum-region" style="font-size:13px; font-weight:700; margin-top:2px;">홍대 · 연남 권역</div>
+        <div id="sum-region" style="font-size:13px; font-weight:700; margin-top:2px;">선택한 자치구 없음</div>
       </div>
     </div>
 
@@ -799,9 +801,9 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
 
   window.currentStep = 1;
   window.totalSteps = 6;
-  window.selectedRegionKey = 'hongdae';
-  window.selectedDistricts = new Set(['마포구']);
-  window.selectedRegions = ['마포구'];
+  window.selectedRegionKey = null;
+  window.selectedDistricts = new Set();
+  window.selectedRegions = [];
   window.completedPlanIds = new Set();
   window.completedCount = 0;
   window.activeTotalPlans = 4;
@@ -1146,8 +1148,8 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   };
 
   function generateMate() {
-    const age = parseInt(document.getElementById('user-age')?.value || '22');
-    const gender = document.getElementById('user-gender')?.value || 'male';
+    const age = parseInt(document.getElementById('user-age')?.value,10);
+    const gender = document.getElementById('user-gender')?.value;
     const nicknameInput = document.getElementById('nickname')?.value.trim();
     const nickname = nicknameInput || '여행자';
 
@@ -1223,7 +1225,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
 
       const nickInput = document.getElementById('nickname')?.value.trim();
       const nick = nickInput || '여행자';
-      const age = document.getElementById('user-age')?.value || '22';
+      const age = document.getElementById('user-age')?.value;
       const gen = document.getElementById('user-gender')?.value === 'male' ? '남성' : '여성';
       const startTSelect = document.getElementById('start-time-picker');
       const startT = startTSelect ? startTSelect.options[startTSelect.selectedIndex].text : '11:00 AM';
@@ -1233,7 +1235,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
       const pProfile = document.getElementById('sum-profile');
       const pLogistics = document.getElementById('sum-logistics');
       const pRegion = document.getElementById('sum-region');
-      if (pProfile) pProfile.innerText = `${nick} (${age}세 ${gen}) / ${window.aiInterestProfile?.summary || '로컬 패션, 카페투어'}`;
+      if (pProfile) pProfile.innerText = `${nick} (${age}세 ${gen}) / ${window.aiInterestProfile?.summary || '서울 로컬 탐방'}`;
       if (pLogistics) pLogistics.innerText = `출발 위치 예시 · ${startT} 시작 (${dur}시간 코스)`;
       if (pRegion) pRegion.innerText = Array.isArray(window.selectedRegions) && window.selectedRegions.length ? `${window.selectedRegions.join(' · ')} 생활권` : reg.title;
     } else if (window.currentStep === 8) {
@@ -1277,14 +1279,30 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   window.closeNameRequiredModal = function(){
     const modal=document.getElementById('name-required-modal');
     if(modal)modal.style.display='none';
-    const input=document.getElementById('nickname');
+    const input=document.getElementById(window.requiredFocusId||'nickname');
     input?.focus();
   };
 
   window.nextStep = async function() {
-    if(window.currentStep===1&&!document.getElementById('nickname')?.value.trim()){
-      const modal=document.getElementById('name-required-modal');
-      if(modal)modal.style.display='flex';
+    if(window.currentStep===1){
+      const age=Number(document.getElementById('user-age')?.value);
+      const required=[
+        ['nickname',!document.getElementById('nickname')?.value.trim(),'이름을 입력해주세요'],
+        ['nationality',!document.getElementById('nationality')?.value,'국적을 선택해주세요'],
+        ['user-age',!Number.isInteger(age)||age<1||age>120,'나이를 입력해주세요 (1~120세)'],
+        ['user-gender',!document.getElementById('user-gender')?.value,'성별을 선택해주세요']
+      ].find(([,missing])=>missing);
+      if(required){
+        window.requiredFocusId=required[0];
+        document.getElementById('name-required-title').textContent=required[2];
+        document.querySelector('#name-required-modal .modal-sub').textContent='서울메이트가 여행자에게 맞는 일정을 준비할 수 있도록 알려주세요.';
+        document.getElementById('name-required-modal').style.display='flex';
+        return;
+      }
+    }
+    if(window.currentStep===6&&!window.selectedRegions?.length){
+      const list=document.getElementById('district-selected-list');
+      if(list)list.innerHTML='<span style="font-size:11px;color:#B91C1C;font-weight:800;">여행할 자치구를 하나 이상 선택해주세요.</span>';
       return;
     }
     if (window.currentStep < 7) {
@@ -1372,9 +1390,8 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   window.toggleDistrict=function(d){
     if(window.selectedDistricts.has(d)) window.selectedDistricts.delete(d); else window.selectedDistricts.add(d);
     window.selectedRegions=[...window.selectedDistricts];
-    window.selectedRegionKey=window.selectedRegions[0]||'마포구';
+    window.selectedRegionKey=window.selectedRegions[0]||null;
     renderDistrictPicker();
-    const first=window.selectedRegions[0]; const data=regionData[first==='마포구'?'hongdae':'hongdae'];
     const t=document.getElementById('preview-title'); const tg=document.getElementById('preview-tag'); const desc=document.getElementById('preview-desc');
     if(t)t.innerText=window.selectedRegions.length?`${window.selectedRegions.join(' · ')} 생활권`:'자치구를 선택해주세요';
     if(tg)tg.innerText=window.selectedRegions.length?'선택 생활권 로컬 탐색':'지역 선택 대기';

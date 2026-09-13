@@ -50,7 +50,7 @@
   function mapsReady(){return loadSdk().then(()=>new Promise((resolve,reject)=>window.kakao?.maps?.load?window.kakao.maps.load(resolve):reject(new Error('카카오맵 로더 없음'))));}
   function syncSelection(){
     const names=[...state.selected].map(k=>data[k].name);
-    window.selectedDistricts=new Set(names); window.selectedRegions=names; window.selectedRegionKey=names[0]||'hongdae';
+    window.selectedDistricts=new Set(names); window.selectedRegions=names; window.selectedRegionKey=names[0]||null;
     const count=document.getElementById('district-selected-count'), list=document.getElementById('district-selected-list');
     if(count) count.textContent=`${names.length}개 선택`;
     if(list) list.innerHTML=names.length?[...state.selected].map(k=>`<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid #BFDBFE;background:#EFF6FF;color:#1D4ED8;border-radius:999px;font-size:10px;font-weight:800;"><button type="button" onclick="showDistrictDescription('${k}')" style="border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer;">${esc(data[k].name)}</button><button type="button" onclick="removeSelectedDistrict('${k}',event)" style="width:16px;height:16px;border:0;border-radius:50%;background:#DBEAFE;color:#1D4ED8;cursor:pointer;">×</button></span>`).join(''):'<span style="font-size:10px;color:#94A3B8;">지도에서 여행할 자치구를 여러 개 선택해보세요.</span>';
