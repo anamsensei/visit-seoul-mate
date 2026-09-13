@@ -55,8 +55,10 @@ function createServer(){return http.createServer(async(req,res)=>{
   }
   if(url.pathname==='/api/weather'){
     const region=url.searchParams.get('region')||'hongdae';
-    if(!Object.hasOwn(REGIONS,region))return reply(400,{error:'INVALID_REGION'});
-    try{return reply(200,await weather(region));}catch{return reply(502,{error:'WEATHER_UNAVAILABLE',message:'날씨 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'});}
+    const hasPosition=url.searchParams.has('lat')||url.searchParams.has('lng');
+    const position=hasPosition?{lat:Number(url.searchParams.get('lat')),lng:Number(url.searchParams.get('lng'))}:null;
+    if(!Object.hasOwn(REGIONS,region)||hasPosition&&(!url.searchParams.has('lat')||!url.searchParams.has('lng')||!Number.isFinite(position.lat)||!Number.isFinite(position.lng)||position.lat<37.3||position.lat>37.8||position.lng<126.7||position.lng>127.3))return reply(400,{error:'INVALID_REGION'});
+    try{return reply(200,await weather(region,position));}catch{return reply(502,{error:'WEATHER_UNAVAILABLE',message:'날씨 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'});}
   }
   if(url.pathname==='/api/visit/status')return reply(200,{configured:visit.configured,mode:visit.configured?'live':'unconfigured',source:'visitseoul',message:visit.configured?'비짓서울 API 키가 설정되었습니다.':'Render 환경변수 VISITSEOUL_API_KEY가 필요합니다.'});
   if(url.pathname==='/api/visit/inventory'){

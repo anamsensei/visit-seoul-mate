@@ -631,7 +631,7 @@
 
       <section class="weather-card" id="weather-card" aria-label="여행 지역의 현재 날씨">
         <div class="weather-top"><h2 class="weather-heading">지금, 우리 동네 날씨</h2><span class="weather-badge sample" id="weather-badge">예시 날씨</span></div>
-        <p class="weather-place">⌖ <span id="weather-region">홍대 · 연남</span> · 표시된 조회 지역 기준</p>
+        <p class="weather-place">⌖ <span id="weather-region">GPS 현재 위치 확인 중</span> · 표시된 조회 지역 기준</p>
         <div class="weather-main"><div class="weather-art" aria-hidden="true" id="weather-icon">◌</div><div><div class="weather-temperature"><span id="weather-temperature">—</span><small>°C</small></div><p class="weather-condition" id="weather-condition">날씨 확인 중</p></div><button type="button" class="weather-refresh" id="weather-refresh" aria-label="날씨 새로고침" title="날씨 새로고침">↻</button></div>
         <dl class="weather-metrics"><div><dt>습도</dt><dd id="weather-humidity">—</dd></div><div><dt>바람</dt><dd id="weather-wind">—</dd></div><div><dt>강수량</dt><dd id="weather-rain">—</dd></div></dl>
         <div class="weather-advice"><span aria-hidden="true">✦</span><p id="weather-advice">다음 장소로 출발하기 전, 날씨를 확인해요.</p></div>
@@ -1777,6 +1777,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   const $=id=>document.getElementById('weather-'+id);
   let generation=0,controller,timer,lastRegion=null,lastData=null,lastCheck=0;
   const names={hongdae:'홍대 · 연남',yeonhui:'연희 · 연남',suyu:'수유 · 우이천',jongno_hyehwa:'혜화 · 종로',gangnam:'강남 · 압구정',seongsu:'성수 · 서울숲',seochon:'서촌 · 부암',euljiro:'을지로 · 신당',jamsil:'잠실 · 송리단길'};
+  const districtRegion={종로구:'jongno_hyehwa',중구:'euljiro',용산구:'euljiro',성동구:'seongsu',광진구:'jamsil',동대문구:'seongsu',중랑구:'suyu',성북구:'jongno_hyehwa',강북구:'suyu',도봉구:'suyu',노원구:'suyu',은평구:'yeonhui',서대문구:'yeonhui',마포구:'hongdae',양천구:'hongdae',강서구:'hongdae',구로구:'hongdae',금천구:'hongdae',영등포구:'hongdae',동작구:'seochon',관악구:'gangnam',서초구:'gangnam',강남구:'gangnam',송파구:'jamsil',강동구:'jamsil'};
   const sample={dry:{temperature:24.3,humidity:58,wind:2.1,rain:0,precipitation:0},rain:{temperature:20.8,humidity:86,wind:3.6,rain:2.5,precipitation:1},snow:{temperature:-1.2,humidity:74,wind:2.8,rain:0.4,precipitation:3}};
   function demo(){const region=window.selectedRegionKey||'hongdae';return {...sample[$('scenario').value],mode:'demo',region,location:names[region]||'서울'};}
   function render(data){
@@ -1796,7 +1797,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     $('card').classList.toggle('rainy',data.precipitation>0);
     $('demo').hidden=!isDemo;
     $('time').textContent=isDemo?'시연용 예시 · 실제 관측 정보가 아닙니다':new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(data.observedAt))+' 관측 · 한국 시간';
-    $('source').textContent=isDemo?'연결 예정: 기상청 초단기실황':'출처: 기상청 초단기실황 · 선택 지역 대표 격자';
+    $('source').textContent=isDemo?'연결 예정: 기상청 초단기실황':`출처: 기상청 초단기실황 · ${data.region==='gps'?'GPS 위치 주변 격자':'선택 지역 대표 격자'}`;
     $('advice').textContent=data.precipitation>0?(data.precipitation===3||data.precipitation===7?'눈이 내리고 있어요. 이동할 때 미끄러운 길을 조심해요.':'우산을 챙겨요. 야외 일정 사이에 실내에서 쉬어가도 좋아요.'):data.temperature>=30?'더운 날씨예요. 물을 챙기고 그늘에서 쉬어가요.':data.temperature<5?'쌀쌀한 날씨예요. 따뜻한 겉옷을 챙겨요.':'다음 장소로 출발하기 전, 날씨를 한 번 확인해요.';
     $('status').textContent=isDemo?'API 연결 전에는 예시 날씨로 화면을 확인할 수 있어요.':stale?'최신 관측이 늦어지고 있어요. 관측 시각을 확인해주세요.':'이 화면에서 10분마다 확인해요. 관측값은 발표 주기에 따라 갱신돼요.';
   }
@@ -1814,26 +1815,59 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     $('status').textContent=city.mode==='snapshot'?'저장된 공개 샘플입니다. 현재 여행 지역의 날씨가 아닙니다.':'조회 지역 기준입니다. 관측 시각을 확인해주세요.';
   };
   window.clearCityWeather=function(){window.cityWeatherActive=null;load();};
+  async function gpsCityWeather(position){
+    if(!position||!window.kakao?.maps?.services?.Geocoder||!window.cityAreaForDistrict)return null;
+    const district=await new Promise(resolve=>{
+      const timeout=setTimeout(()=>resolve(null),3000);
+      const geocoder=new window.kakao.maps.services.Geocoder();
+      geocoder.coord2RegionCode(position.lng,position.lat,(rows,status)=>{clearTimeout(timeout);resolve(status===window.kakao.maps.services.Status.OK?rows.find(row=>row.region_type==='H')?.region_2depth_name||rows[0]?.region_2depth_name:null)});
+    });
+    const area=window.cityAreaForDistrict(district);if(!area)return null;
+    const response=await fetch((window.SEOULMATE_API_BASE||'').replace(/\/$/,'')+'/api/city?area='+encodeURIComponent(area),{signal:controller.signal});
+    if(!response.ok)return null;
+    const city=await response.json(),w=city.weather;
+    if(city.mode!=='live'||!w||!Number.isFinite(w.temperature)||!w.time)return null;
+    const observedAt=w.time.replace(' ','T')+':00+09:00';if(!Number.isFinite(Date.parse(observedAt)))return null;
+    const precipitation={'없음':0,'비':1,'비/눈':2,'눈':3,'소나기':4,'빗방울':5,'빗방울/눈날림':6,'눈날림':7}[w.precipitation]??null;
+    return {mode:'live',region:'gps',location:`GPS 현재 위치 · ${city.area} 대표 지점`,temperature:w.temperature,humidity:w.humidity,wind:w.wind,rain:w.rain!==''&&Number.isFinite(Number(w.rain))?Number(w.rain):null,precipitation,observedAt,cityArea:city.area};
+  }
   async function load(){
     if(window.cityWeatherActive){window.applyCityWeather(window.cityWeatherActive);return;}
 
     controller?.abort();controller=new AbortController();const seq=++generation;
     const region=window.selectedRegionKey||'hongdae';lastRegion=region;lastCheck=Date.now();
-    if(lastData?.region!==region){lastData=null;$('temperature').textContent='—';$('condition').textContent='날씨 확인 중';$('humidity').textContent='—';$('wind').textContent='—';$('rain').textContent='—';$('time').textContent='';$('badge').textContent='확인 중';$('region').textContent=names[region]||'서울';}
+    if(lastData?.region!==region){lastData=null;$('temperature').textContent='—';$('condition').textContent='날씨 확인 중';$('humidity').textContent='—';$('wind').textContent='—';$('rain').textContent='—';$('time').textContent='';$('badge').textContent='확인 중';$('region').textContent='GPS 현재 위치 확인 중';}
     $('refresh').disabled=true;$('status').textContent='날씨 정보를 확인하고 있어요…';
     const timeout=setTimeout(()=>controller?.abort(),18000);
     try{
       if(location.protocol==='file:'&&!window.SEOULMATE_WEATHER_ENDPOINT){render(demo());return;}
-      const response=await fetch(endpoint+'?region='+encodeURIComponent(region),{signal:controller.signal});
+      let position=null;
+      if(navigator.geolocation&&location.protocol==='https:'){
+        position=await new Promise(resolve=>navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),()=>resolve(null),{enableHighAccuracy:true,maximumAge:300000,timeout:7000}));
+      }
+      if(seq!==generation)return;
+      const query=new URLSearchParams({region:districtRegion[region]||region});
+      if(position&&position.lat>=37.3&&position.lat<=37.8&&position.lng>=126.7&&position.lng<=127.3){query.set('lat',String(position.lat));query.set('lng',String(position.lng));}
+      const response=await fetch(endpoint+'?'+query,{signal:controller.signal});
       if(seq!==generation)return;
       // Static hosting has no API route. A failed live API must never become sample weather.
       if(response.status===404){render(demo());return;}
       if(!response.ok)throw new Error('API');
       if(!(response.headers.get('content-type')||'').includes('application/json')){render(demo());return;}
       const data=await response.json();if(seq!==generation)return;
-      if(data.mode==='demo'){render(demo());return;}
-      if(data.mode!=='live'||data.region!==region||!Number.isFinite(data.temperature)||!Number.isFinite(Date.parse(data.observedAt)))throw new Error('DATA');
+      if(data.mode==='demo'){
+        const cityData=await gpsCityWeather(position);
+        if(seq!==generation)return;
+        if(!cityData)throw new Error('WEATHER_UNAVAILABLE');
+        render(cityData);
+        $('source').textContent=`출처: 서울 실시간 도시데이터 · ${cityData.cityArea} 대표 지점`;
+        $('badge').textContent=Date.now()-Date.parse(cityData.observedAt)>2*3600000?'이전 관측':'서울시 제공 날씨';
+        $('status').textContent='GPS와 같은 자치구의 대표 지점 날씨입니다. 현재 위치의 정확한 관측값은 아닙니다.';
+        return;
+      }
+      if(data.mode!=='live'||data.region!==(query.has('lat')?'gps':query.get('region'))||!Number.isFinite(data.temperature)||!Number.isFinite(Date.parse(data.observedAt)))throw new Error('DATA');
       render(data);
+      if(!query.has('lat'))$('status').textContent='GPS를 확인하지 못해 선택 지역 대표 격자의 날씨를 표시합니다.';
     }catch{
       if(seq!==generation)return;
       if(lastData?.mode==='live'){$('badge').textContent='갱신 실패 · 이전 관측';$('badge').classList.add('sample');}
@@ -1861,6 +1895,10 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
   const cache=new Map();let seq=0,controller,timer,lastRegion=null;
   const planAreas={HD_1:'연남동',HD_2:'홍대 관광특구'};
   const presets={hongdae:'연남동',yeonhui:'연남동',jongno_hyehwa:'혜화역',gangnam:'압구정로데오거리',seongsu:'성수',seochon:'서촌',euljiro:'을지로',jamsil:'잠실',suyu:'수유'};
+  const districtAreas={종로구:'경복궁',중구:'명동 관광특구',용산구:'이태원 관광특구',성동구:'성수카페거리',광진구:'건대입구역',동대문구:'회기역',성북구:'성신여대입구역',강북구:'수유역',도봉구:'쌍문역',은평구:'연신내역',서대문구:'신촌·이대역',마포구:'연남동',양천구:'오목교역·목동운동장',강서구:'서울식물원·마곡나루역',구로구:'구로역',금천구:'가산디지털단지역',영등포구:'영등포 타임스퀘어',동작구:'노량진',관악구:'서울대입구역',서초구:'교대역',강남구:'강남역',송파구:'잠실역',강동구:'천호역'};
+  window.cityAreaForDistrict=d=>districtAreas[d]||null;
+  const districtOf=p=>Object.keys(districtAreas).find(d=>String(p?.address||'').includes(d))||null;
+  const areaForPlan=p=>planAreas[p?.id]||districtAreas[districtOf(p)]||null;
   const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const crowdScore=level=>({ '여유':20, '보통':50, '약간 붐빔':70, '붐빔':90 }[level] ?? null);
   const time=t=>t||'기준 시각 미제공';
@@ -1882,32 +1920,35 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
     $('air-note').textContent=[w.airMessage,w.uvMessage,'날씨·환경 기준 '+time(w.time)].filter(Boolean).join(' ');
     rows('weather-forecast',w.forecast.map(f=>block(f.time.length===12?f.time.slice(8,10)+':'+f.time.slice(10):f.time,`${f.temperature||'—'}°C · ${f.sky||'정보 없음'} · 강수확률 ${f.rainChance===null?'—':f.rainChance+'%'}`)),'시간대별 예보가 없습니다.');
     $('status').textContent=snapshot?'서울시 공개 샘플의 실제 응답을 저장한 미리보기입니다. 지역 선택 후 새로고침하면 연결을 다시 확인합니다.':'지역 단위 정보입니다. 개별 가게의 대기 인원·영업 여부를 뜻하지 않습니다.';
-    window.applyCityWeather?.(d);
     if(!snapshot)cache.set($('area').value,d);
     refreshBadges();
   }
   function refreshBadges(){
-    document.querySelectorAll('#planner-timeline .tag-cong').forEach((el,i)=>{const p=window.currentDisplayedSpots[i],area=planAreas[p?.id],d=cache.get(area)||cache.get($('area').value);
-      el.className='tag-cong cong-mid';
-      const score=crowdScore(d?.crowd?.level);
-      if(p&&score!==null&&fresh(d)) p.congestion=score;
-      el.textContent=d&&score!==null?`${d.area||area||$('area').value} · 지역 혼잡도 ${score}%${fresh(d)?'':' · 갱신 지연'}`:(d?.area||area)?(d.area||area)+' · 정보 확인 필요':'지역 혼잡도 확인 중';
-      if(score!==null&&score>=70)el.className='tag-cong cong-high';
+    document.querySelectorAll('#planner-timeline .tag-cong').forEach((el,i)=>{const p=window.currentDisplayedSpots[i],area=areaForPlan(p),d=area?cache.get(area):null;
+      const score=crowdScore(d?.crowd?.level),isFresh=d&&fresh(d);
+      el.className=isFresh&&score>=70?'tag-cong cong-high':'tag-cong cong-mid';
+      if(p&&isFresh&&score!==null)p.congestion=score;
+      el.textContent=!area?'장소 주변 혼잡도 미제공':d&&score!==null?`${districtOf(p)||area} · ${d.area} 대표 지점: ${d.crowd.level}${isFresh?'':' · 갱신 지연'}`:`${districtOf(p)||area} · 대표 지점 혼잡도 확인 중`;
     });
   }
+  async function loadPlanAreas(){
+    const areas=[...new Set((window.currentDisplayedSpots||[]).map(areaForPlan).filter(Boolean))];
+    await Promise.all(areas.filter(area=>!cache.has(area)||Date.now()-Date.parse(cache.get(area).fetchedAt)>=300000).map(async area=>{
+      try{const response=await fetch(endpoint+'?area='+encodeURIComponent(area));if(!response.ok)return;const data=await response.json();if(data.mode==='live'){cache.set(area,data);refreshBadges();}}catch{}
+    }));
+  }
   window.cityShouldWarn=plan=>{
-    const d=cache.get(planAreas[plan.id])||cache.get($('area').value);
+    const area=areaForPlan(plan),d=area?cache.get(area):null;
     const score=crowdScore(d?.crowd?.level);
     if(!fresh(d)||score===null)return false;
     const sensitivity=Number(document.querySelector('#mood-selector .active')?.dataset.congestionSens||50);
     return score>=90||(sensitivity>=80&&score>=70);
   };
-  window.cityAfterPlans=refreshBadges;
+  window.cityAfterPlans=function(){refreshBadges();if(window.currentStep===9)loadPlanAreas();};
   async function load(){
     const version=++seq;controller?.abort();controller=new AbortController();
     $('refresh').disabled=true;$('status').textContent='서울시 지역 정보를 확인하고 있어요…';
     $('content').hidden=true;$('badge').textContent='조회 중';
-    window.clearCityWeather?.();
     try{
       if(location.protocol==='file:'&&!window.SEOULMATE_API_BASE)throw new Error('UNCONFIGURED');
       const response=await fetch(endpoint+'?area='+encodeURIComponent($('area').value),{signal:controller.signal});
@@ -1923,9 +1964,10 @@ const CITY_SNAPSHOT = {"mode": "snapshot", "area": "광화문·덕수궁", "area
   $('sample').addEventListener('click',()=>{seq++;controller?.abort();$('refresh').disabled=false;$('area').value='광화문·덕수궁';render(CITY_SNAPSHOT);});
   function activate(){
     if(window.currentStep===9&&!document.hidden){
-      if(lastRegion!==window.selectedRegionKey){lastRegion=window.selectedRegionKey;if(presets[lastRegion])$('area').value=presets[lastRegion];load();}
-      if(!timer)timer=setInterval(load,300000);
+      if(lastRegion!==window.selectedRegionKey){lastRegion=window.selectedRegionKey;const firstArea=districtAreas[lastRegion]||presets[lastRegion]||(window.currentDisplayedSpots||[]).map(areaForPlan).find(Boolean);if(firstArea){$('area').value=firstArea;load();}else{$('content').hidden=true;$('badge').textContent='미제공';$('status').textContent='선택 지역을 대표하는 서울시 도시데이터 지점이 없습니다.';}}
+      if(!timer)timer=setInterval(()=>{load();loadPlanAreas();},300000);
       refreshBadges();
+      loadPlanAreas();
     }else{clearInterval(timer);timer=null;seq++;controller?.abort();lastRegion=null;}
   }
   const previous=updateUI;updateUI=function(){previous();activate();};
