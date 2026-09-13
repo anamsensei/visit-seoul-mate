@@ -42,7 +42,8 @@ function selectItinerary(pool,{region='hongdae',regions=[],limit=5,startHour=11,
   const pair=CENTERS[region]||CENTERS.hongdae,center={lat:pair[0],lng:pair[1]};
   const selectedRegions=[...new Set((Array.isArray(regions)?regions:[]).map(String).map(s=>s.trim()).filter(Boolean))];
   const districtRegions=selectedRegions.filter(d=>/구$/.test(d));
-  const districtMatch=p=>!districtRegions.length||districtRegions.some(d=>String(p.address||'').includes(d)||String(p.title||'').includes(d));
+  const belongsTo=(p,d)=>String(p.address||'').includes(d)||String(p.title||'').includes(d);
+  const districtMatch=p=>!districtRegions.length||districtRegions.some(d=>belongsTo(p,d));
   const ranked=pool.filter(valid).map(p=>({...p,distanceFromRegionKm:km(center,p)})).filter(p=>districtRegions.length?districtMatch(p):p.distanceFromRegionKm<=5)
     .sort((a,b)=>(b.relevance||0)-(a.relevance||0)||a.distanceFromRegionKm-b.distanceFromRegionKm||a.id.localeCompare(b.id));
   const mealCount=slots(startHour*60,duration*60).length;
@@ -56,7 +57,7 @@ function selectItinerary(pool,{region='hongdae',regions=[],limit=5,startHour=11,
     const activityTarget=Math.max(0,limit-foods.length-(night?1:0));
     const activityPool=nearby.filter(p=>!restaurant(p)&&p!==night);
     const activities=[];
-    if(districtRegions.length){for(let pass=0;activities.length<activityTarget&&pass<districtRegions.length;pass++){const d=districtRegions[pass];const candidate=activityPool.find(p=>!activities.includes(p)&&(String(p.address||'').includes(d)||String(p.title||'').includes(d)));if(candidate)activities.push(candidate);}}
+    if(districtRegions.length){for(let pass=0;activities.length<activityTarget&&pass<districtRegions.length;pass++){const d=districtRegions[pass];const candidate=activityPool.find(p=>!activities.includes(p)&&belongsTo(p,d));if(candidate)activities.push(candidate);}}
     for(const p of activityPool)if(activities.length<activityTarget&&!activities.includes(p))activities.push(p);
     if(night&&activities.length+foods.length<limit)activities.push({...night,nightSlot:true});
     let picked=[...activities,...foods];
@@ -65,12 +66,14 @@ function selectItinerary(pool,{region='hongdae',regions=[],limit=5,startHour=11,
     while(!result&&picked.length>1){picked=picked.slice(0,-1);result=schedule(picked,{startHour,duration});}
     if(!result)continue;
     const scheduledMeals=picked.filter(p=>restaurant(p)&&!p.nightSlot).length;
-    result.complete=picked.length>=limit&&scheduledMeals===mealCount;
+    result.coveredDistricts=districtRegions.filter(d=>picked.some(p=>belongsTo(p,d)));
+    result.missingDistricts=districtRegions.filter(d=>!result.coveredDistricts.includes(d));
+    result.complete=picked.length>=limit&&scheduledMeals===mealCount&&!result.missingDistricts.length;
     result.missingMeals=mealCount-scheduledMeals;
     result.expandedArea=picked.some(p=>p.distanceFromRegionKm>2.5);
     result.utility=picked.reduce((n,p)=>n+(p.relevance||0),0)-result.distanceKm;
-    if(!best||Number(result.complete)>Number(best.complete)||(result.complete===best.complete&&(picked.length>best.places.length||(picked.length===best.places.length&&result.utility>best.utility))))best=result;
+    if(!best||Number(result.complete)>Number(best.complete)||(result.complete===best.complete&&(result.coveredDistricts.length>best.coveredDistricts.length||(result.coveredDistricts.length===best.coveredDistricts.length&&(picked.length>best.places.length||(picked.length===best.places.length&&result.utility>best.utility))))))best=result;
   }
-  return best||{places:[],complete:false,missingMeals:mealCount,expandedArea:false};
+  return best||{places:[],complete:false,missingMeals:mealCount,expandedArea:false,coveredDistricts:[],missingDistricts:districtRegions};
 }
 module.exports={valid,km,cafe,restaurant,nightlife,slots,schedule,selectItinerary,CENTERS};

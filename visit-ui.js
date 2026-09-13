@@ -56,7 +56,8 @@
       window.visitDataMode = 'live'; window.visitLiveSpots = data.places;
       window.renderPlanner?.();
       const complete=data.complete===true;
-      setStatus(complete?`${duration}시간 코스 · 비짓서울 공식 장소 ${data.places.length}곳${data.expandedArea?' · 선택 권역 주변까지 검색 범위를 넓혔어요.':''}`:`일정 구성 미완료 (${data.places.length}/${limit}곳). 식사 시간·이동 조건에 맞는 장소를 더 확보해야 해요.`,complete?'live':'info');
+      const missingDistricts=Array.isArray(data.missingDistricts)?data.missingDistricts:[];
+      setStatus(complete?`${duration}시간 코스 · 비짓서울 공식 장소 ${data.places.length}곳${data.expandedArea?' · 선택 권역 주변까지 검색 범위를 넓혔어요.':''}`:missingDistricts.length?`일정 구성 미완료: ${missingDistricts.join('·')}의 공식 장소를 일정에 넣지 못했어요. 지역·시간·테마를 바꾸거나 다시 조회해주세요.`:`일정 구성 미완료 (${data.places.length}/${limit}곳). 식사 시간·이동 조건에 맞는 장소를 더 확보해야 해요.`,complete?'live':'info');
       if (!complete) action('일정 다시 구성', loadVisitRecommendations);
     } catch (error) {
       if (seq !== generation || window.selectedRegionKey !== region) return;

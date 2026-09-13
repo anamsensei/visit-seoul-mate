@@ -210,6 +210,10 @@ function createVisitService(options = {}) {
       const groups=new Map();
       for(const p of [...candidates.values()].filter(p=>!attempted.has(p.id)).sort((a,b)=>relevance(b)-relevance(a))){if(!groups.has(p.category))groups.set(p.category,[]);groups.get(p.category).push(p);}
       const queue=[];while([...groups.values()].some(g=>g.length)){for(const g of groups.values())if(g.length)queue.push(g.shift());}
+      // Verify a few candidates from every selected district before filling remaining slots.
+      const districtQueues=selectedRegions.filter(r=>/구$/.test(r)).map(d=>queue.filter(p=>String(p.address||'').includes(d)||String(p.title||'').includes(d)));
+      const priority=[];for(let i=0;i<3;i++)for(const group of districtQueues)if(group[i]&&!priority.some(p=>p.id===group[i].id))priority.push(group[i]);
+      const ordered=[...priority,...queue],seen=new Set();queue.length=0;for(const p of ordered)if(!seen.has(p.id)){seen.add(p.id);queue.push(p);}
       let stageAttempts=0;
       for(let offset=0;offset<queue.length&&attempted.size<80&&stageAttempts<24&&Date.now()<deadline;offset+=8){
         await parallel(queue.slice(offset,offset+Math.min(8,80-attempted.size)),async p=>{
@@ -240,7 +244,7 @@ function createVisitService(options = {}) {
     if(candidates.size&&!usable.size&&lastError)throw lastError;
     return {mode:'live',source:'visitseoul',region,regions:selectedRegions,categories:wanted,interests:preferenceWords,places:result.places,
       complete:result.complete,requestedCount:limit,partial:diagnostics.listFailures+diagnostics.detailFailures>0,
-      failedCategories:[...failedCategories],expandedArea:result.expandedArea,
+      failedCategories:[...failedCategories],expandedArea:result.expandedArea,coveredDistricts:result.coveredDistricts,missingDistricts:result.missingDistricts,
       schedule:{startHour,duration,missingMeals:result.missingMeals,travelMethod:'좌표 거리 기반 도보 추정',hoursVerified:false},
       diagnostics:{...diagnostics,candidates:candidates.size,usable:usable.size,selected:result.places.length,budgetExceeded:Date.now()>=deadline},
       generatedAt:new Date().toISOString()};
