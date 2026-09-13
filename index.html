@@ -670,7 +670,7 @@
       </div>
     </div>
 
-    <!-- STEP 10: 오늘의 여행이야기 & GPS 발자취 결산 & 실시간 방명록 -->
+    <!-- STEP 10: 오늘의 서울이야기 & GPS 발자취 결산 & 실시간 방명록 -->
     <div class="step-page" id="step10"></div>
 
   </div>
@@ -1243,7 +1243,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
       if (stepIndicator) stepIndicator.innerText = 'ACTIVE TOUR';
       if (mainFooter) mainFooter.style.display = 'none';
     } else if (window.currentStep === 10) {
-      if (stepIndicator) stepIndicator.innerText = 'MY TRAVEL STORY';
+      if (stepIndicator) stepIndicator.innerText = 'MY SEOUL STORY';
       if (mainFooter) mainFooter.style.display = 'none';
       if (topBackBtn) topBackBtn.style.display = 'block';
     }
@@ -1448,7 +1448,7 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
   };
 
   function getDynamicBadge(regionTitle, percentage) {
-    const mainRegion = regionTitle ? regionTitle.split('·')[0].trim() : '서울';
+    const mainRegion = regionTitle?.trim() || '서울';
     if (percentage < 30) {
       return { emoji: "☕", title: `${mainRegion}을 즐기지 못했네요 분발하세요!`, sub: `아직 ${mainRegion}의 진정한 매력을 맛보지 못했어요. 다음엔 꼭 완주해봐요!` };
     } else if (percentage < 60) {
@@ -1468,22 +1468,23 @@ window.SEOULMATE_API_BASE = location.hostname === 'anamsensei.github.io'
     const longest=stats.stays[0],shortest=stats.stays.length>1?stats.stays.at(-1):null;
     const name=document.getElementById('nickname').value.trim()||'여행자',date=new Date(tripLog.ended||Date.now());
     const reg=regionData[window.selectedRegionKey]||regionData.hongdae;
-    const dynamicBadge=getDynamicBadge(reg.title, percent);
+    const storyRegion=Array.isArray(window.selectedRegions)&&window.selectedRegions.length?window.selectedRegions.join(' · '):reg.title;
+    const dynamicBadge=getDynamicBadge(storyRegion, percent);
 
     const stayCard=(s,title,symbol)=>`<div class="story-stay"><div class="stay-symbol">${symbol}</div><div><span class="stay-label">${title}</span><h3>${s?escapeHTML(s.title):'비교할 기록이 부족해요'}</h3><p class="stay-duration">${s?stayText(s.seconds)+' 머물렀어요 · 추정':'장소 근처에서 1분 이상 기록이 필요해요'}</p></div></div>`;
     
     document.getElementById('step10').innerHTML=`
       <section class="story-hero">
-        <div class="story-eyebrow">SEOUL MATE · TRAVEL JOURNAL</div>
-        <h1>오늘의 여행이야기</h1>
+        <div class="story-eyebrow">SEOUL MATE · SEOUL JOURNAL</div>
+        <h1>오늘의 서울이야기</h1>
         <p>${escapeHTML(name)}님, 오늘도 서울과 한 걸음 가까워졌어요.<br>함께한 하루를 천천히 돌아볼까요?</p>
-        <span class="story-date">${date.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'})} · ${escapeHTML(reg.title)}</span>
+        <span class="story-date">${date.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'})} · ${escapeHTML(storyRegion)}</span>
       </section>
 
       <div class="story-card" style="text-align:center; padding:18px; border:1.5px solid var(--seoul-blue);">
         <div style="font-size:38px; margin-bottom:4px;">${dynamicBadge.emoji}</div>
-        <div style="font-size:17px; font-weight:800; color:var(--seoul-blue);">${dynamicBadge.title}</div>
-        <div style="font-size:12px; color:var(--text-sub); margin-top:4px;">${dynamicBadge.sub}</div>
+        <div style="font-size:17px; font-weight:800; color:var(--seoul-blue);">${escapeHTML(dynamicBadge.title)}</div>
+        <div style="font-size:12px; color:var(--text-sub); margin-top:4px;">${escapeHTML(dynamicBadge.sub)}</div>
       </div>
 
       <div class="story-card story-completion">
